@@ -21,22 +21,35 @@
 #include "internal.h"
 #include "kevent_internal.h"
 
-
+#if !TARGET_OS_WIN32
 static bool _dispatch_select_workaround;
 static fd_set _dispatch_rfds;
 static fd_set _dispatch_wfds;
 static void *_dispatch_rfd_ptrs[FD_SETSIZE];
 static void *_dispatch_wfd_ptrs[FD_SETSIZE];
+#endif
 
-static int _dispatch_kq;
+#if TARGET_OS_WIN32
+typedef HANDLE _queue_type;
+#else
+typedef int _queue_type;
+#endif
+
+static _queue_type _dispatch_kq;
 
 static void
-_dispatch_get_kq_init(void *context __attribute__((unused)))
+_dispatch_get_kq_init(void *context UNUSED)
 {
+#if TARGET_OS_WIN32
+	_dispatch_kq = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
+	if(_dispatch_kq == NULL) {
+		dispatch_assert_zero(GetLastError());
+	}
+#else
 	static const struct kevent kev = {
-		.ident = 1,
-		.filter = EVFILT_USER,
-		.flags = EV_ADD|EV_CLEAR,
+		/* .ident  = */	1,
+		/* .filter = */	EVFILT_USER,
+		/* .flags  = */	EV_ADD|EV_CLEAR
 	};
 
 	_dispatch_kq = kqueue();
@@ -48,13 +61,13 @@ _dispatch_get_kq_init(void *context __attribute__((unused)))
 		dispatch_assert_zero(errno);
 	}
 
-	(void)dispatch_assume_zero(kevent(_dispatch_kq, &kev, 1, NULL, 0,
-	    NULL)); 
+	(void)dispatch_assume_zero(kevent(_dispatch_kq, &kev, 1, NULL, 0, NULL)); 
+#endif
 
-	_dispatch_queue_push(_dispatch_mgr_q.do_targetq, &_dispatch_mgr_q);
+	_dispatch_queue_push(_dispatch_mgr_q.do_targetq, as_do(&_dispatch_mgr_q));
 }
 
-static int
+static _queue_type
 _dispatch_get_kq(void)
 {
 	static dispatch_once_t pred;
@@ -78,12 +91,52 @@ _dispatch_mgr_thread2(struct kevent *kev, size_t cnt)
 		} else {
 			_dispatch_source_drain_kevent(&kev[i]);
 		}
-    }
+	}
 }
 
 static dispatch_queue_t
 _dispatch_mgr_invoke(dispatch_queue_t dq)
 {
+#if TARGET_OS_WIN32
+	struct timespec ts = {0};
+	DWORD bytes_transferred = 0;
+	ULONG_PTR completion_key = 0;
+	OVERLAPPED* ol = NULL;
+	DWORD timeout = 0;
+
+	_dispatch_thread_setspecific(dispatch_queue_key, dq);
+
+	for (;;) {
+		_dispatch_run_timers();
+
+		if(NULL != _dispatch_get_next_timer_fire(&ts)) {
+			timeout = (ts.tv_sec * 1000) + (ts.tv_nsec / NSEC_PER_MSEC);
+		} else {
+			timeout = INFINITE;
+		}
+
+		SetLastError(0);
+		GetQueuedCompletionStatus(_dispatch_get_kq(), &bytes_transferred, &completion_key, &ol, timeout);
+
+		switch(GetLastError()) {
+		default:
+			dispatch_assume_zero(GetLastError());
+			continue;
+		case ERROR_SUCCESS:
+			{
+				struct kevent* kev = (struct kevent*)completion_key;
+				if(ol) {
+					kev->data = (intptr_t)ol;
+				}
+				_dispatch_mgr_thread2(kev, 1);
+			}
+			// fall through
+		case WAIT_TIMEOUT:
+			_dispatch_force_cache_cleanup();
+			break;
+		}
+	}
+#else
 	static const struct timespec timeout_immediately = { 0, 0 };
 	struct timespec timeout;
 	const struct timespec *timeoutp;
@@ -177,6 +230,7 @@ _dispatch_mgr_invoke(dispatch_queue_t dq)
 			continue;
 		}
 	}
+#endif
 
 	return NULL;
 }
@@ -185,9 +239,10 @@ static bool
 _dispatch_mgr_wakeup(dispatch_queue_t dq)
 {
 	static const struct kevent kev = {
-		.ident = 1,
-		.filter = EVFILT_USER,
-		.fflags = NOTE_TRIGGER,
+		/* .ident  = */ 1,
+		/* .filter = */ EVFILT_USER,
+		/* .flags  = */ 0,
+		/* .fflags = */ NOTE_TRIGGER
 	};
 
 	_dispatch_debug("waking up the _dispatch_mgr_q: %p", dq);
@@ -200,6 +255,38 @@ _dispatch_mgr_wakeup(dispatch_queue_t dq)
 void
 _dispatch_update_kq(const struct kevent *kev)
 {
+#if TARGET_OS_WIN32
+	switch(kev->filter) {
+	case EVFILT_USER:
+		{
+			switch(kev->fflags) {
+			case NOTE_TRIGGER:
+				{
+					WINBOOL rval = PostQueuedCompletionStatus(_dispatch_get_kq(), 0, (ULONG_PTR)(kev), NULL);
+					if (rval == FALSE) { 
+						dispatch_assume_zero(errno);
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+	case EVFILT_OIO:
+		{
+			if(kev->flags & EV_ADD) {
+				HANDLE result = CreateIoCompletionPort((HANDLE)kev->ident, _dispatch_get_kq(), (ULONG_PTR)kev, 1);
+				dispatch_assert(result == _dispatch_get_kq());
+			} else if(kev->flags & EV_DELETE) {
+				// :( stupid win32.
+			}
+		}
+		break;
+	default:
+		break;
+	}
+#else
 	struct kevent kev_copy = *kev;
 	kev_copy.flags |= EV_RECEIPT;
 
@@ -264,26 +351,33 @@ _dispatch_update_kq(const struct kevent *kev)
 		}
 		break;
 	}
+#endif
 }
 
 static const struct dispatch_queue_vtable_s _dispatch_queue_mgr_vtable = {
-	.do_type = DISPATCH_QUEUE_MGR_TYPE,
-	.do_kind = "mgr-queue",
-	.do_invoke = _dispatch_mgr_invoke,
-	.do_debug = dispatch_queue_debug,
-	.do_probe = _dispatch_mgr_wakeup,
+	/*.do_type   = */	DISPATCH_QUEUE_MGR_TYPE,
+	/*.do_kind   = */	"mgr-queue",
+	/*.do_debug  = */	dispatch_queue_debug,
+	/*.do_invoke = */	_dispatch_mgr_invoke,
+	/*.do_probe  = */	_dispatch_mgr_wakeup,
 };
 
 // 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
 struct dispatch_queue_s _dispatch_mgr_q = {
-	.do_vtable = &_dispatch_queue_mgr_vtable,
-	.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
-	.do_targetq = &_dispatch_root_queues[DISPATCH_ROOT_QUEUE_COUNT - 1],
-
-	.dq_label = "com.apple.libdispatch-manager",
-	.dq_width = 1,
-	.dq_serialnum = 2,
+	/*.do_vtable         = */	&_dispatch_queue_mgr_vtable,
+	/*.do_next           = */	0,
+	/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+	/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+	/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+	/*.do_targetq        = */	&_dispatch_root_queues[DISPATCH_ROOT_QUEUE_COUNT - 1],
+	/*.do_ctxt           = */	0,
+	/*.do_finalizer      = */	0,
+	/*.dq_running        = */	0,
+	/*.dq_width          = */	1,
+	/*.dq_items_tail     = */	0,
+	/*.dq_items_head     = */	0,
+	/*.dq_serialnum      = */	2,
+	/*.dq_finalizer_ctxt = */	0,
+	/*.dq_label          = */	"com.apple.libdispatch-manager",
 };
 

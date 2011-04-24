@@ -45,10 +45,12 @@ static size_t _dispatch_semaphore_debug(dispatch_semaphore_t dsema, char *buf, s
 static long _dispatch_group_wake(dispatch_semaphore_t dsema);
 
 const struct dispatch_semaphore_vtable_s _dispatch_semaphore_vtable = {
-	.do_type = DISPATCH_SEMAPHORE_TYPE,
-	.do_kind = "semaphore",
-	.do_dispose = _dispatch_semaphore_dispose,
-	.do_debug = _dispatch_semaphore_debug,
+	/*.do_type    = */	DISPATCH_SEMAPHORE_TYPE,
+	/*.do_kind    = */	"semaphore",
+	/*.do_debug   = */	_dispatch_semaphore_debug,
+	/*.do_invoke  = */	0,
+	/*.do_probe   = */	0,
+	/*.do_dispose = */	_dispatch_semaphore_dispose,
 };
 
 dispatch_semaphore_t
@@ -72,7 +74,7 @@ _dispatch_put_thread_semaphore(dispatch_semaphore_t dsema)
 	dispatch_semaphore_t old_sema = (dispatch_semaphore_t)_dispatch_thread_getspecific(dispatch_sema4_key);
 	_dispatch_thread_setspecific(dispatch_sema4_key, dsema);
 	if (old_sema) {
-		dispatch_release(old_sema);
+		dispatch_release(as_do(old_sema));
 	}
 }
 
@@ -109,7 +111,7 @@ dispatch_semaphore_create(long value)
 		dsema->dsema_orig = value;
 #if USE_POSIX_SEM
 		ret = sem_init(&dsema->dsema_sem, 0, 0);
-		(void)dispatch_assume_zero(ret);
+		dispatch_assume_zero(ret);
 #endif
 	}
 	
@@ -160,7 +162,8 @@ _dispatch_semaphore_create_handle(HANDLE *s4)
 
 	// lazily allocate the semaphore port
 
-	while (dispatch_assume(tmp = CreateSemaphore(NULL, 0, LONG_MAX, NULL)) == NULL) {
+	while ((tmp = CreateSemaphore(NULL, 0, LONG_MAX, NULL)) == NULL) {
+		dispatch_assume(tmp);
 		sleep(1);
 	}
 
@@ -184,7 +187,7 @@ _dispatch_semaphore_wait_slow(dispatch_semaphore_t dsema, dispatch_time_t timeou
 #if USE_POSIX_SEM || USE_WIN32_SEM
 	int ret;
 #endif
-	long orig;
+	size_t orig;
 	
 again:
 	// Mach semaphores appear to sometimes spuriously wake up.  Therefore,
@@ -372,7 +375,7 @@ _dispatch_semaphore_signal_slow(dispatch_semaphore_t dsema)
 	// may return between the atomic increment and the semaphore_signal(),
 	// therefore an explicit reference must be held in order to safely access
 	// dsema after the atomic increment.
-	_dispatch_retain(dsema);
+	_dispatch_retain(as_do(dsema));
 	
 	dispatch_atomic_inc(&dsema->dsema_sent_ksignals);
 	
@@ -389,7 +392,7 @@ _dispatch_semaphore_signal_slow(dispatch_semaphore_t dsema)
 	ret = ReleaseSemaphore(dsema->dsema_handle, 1, NULL);
 #endif
 
-	_dispatch_release(dsema);
+	_dispatch_release(as_do(dsema));
 	
 	return 1;
 }
@@ -477,15 +480,15 @@ _dispatch_group_wake(dispatch_semaphore_t dsema)
 	}
 	while (head) {
 		dispatch_async_f(head->dsn_queue, head->dsn_ctxt, head->dsn_func);
-		_dispatch_release(head->dsn_queue);
+		_dispatch_release(as_do(head->dsn_queue));
 		do {
 			tmp = head->dsn_next;
-		} while (!tmp && !dispatch_atomic_cmpxchg(&dsema->dsema_notify_tail, head, NULL));
+		} while (!tmp && !dispatch_atomic_cmpxchg_pointer(&dsema->dsema_notify_tail, head, NULL));
 		free(head);
 		head = tmp;
 	}
 	if (do_rel) {
-		_dispatch_release(dsema);
+		_dispatch_release(as_do(dsema));
 	}
 	return 0;
 }
@@ -504,7 +507,7 @@ _dispatch_group_wait_slow(dispatch_semaphore_t dsema, dispatch_time_t timeout)
 #if USE_POSIX_SEM || USE_WIN32_SEM
 	int ret;
 #endif
-	long orig;
+	size_t orig;
 	
 again:
 	// check before we cause another signal to be sent by incrementing dsema->dsema_group_waiters
@@ -654,13 +657,13 @@ dispatch_group_notify_f(dispatch_group_t dg, dispatch_queue_t dq, void *ctxt, vo
 	dsn->dsn_queue = dq;
 	dsn->dsn_ctxt = ctxt;
 	dsn->dsn_func = func;
-	_dispatch_retain(dq);
+	_dispatch_retain(as_do(dq));
 
 	prev = (struct dispatch_sema_notify_s *)dispatch_atomic_xchg(&dsema->dsema_notify_tail, dsn);
 	if (fastpath(prev)) {
 		prev->dsn_next = dsn;
 	} else {
-		_dispatch_retain(dg);
+		_dispatch_retain(as_do(dg));
 		dsema->dsema_notify_head = dsn;
 		if (dsema->dsema_value == dsema->dsema_orig) {
 			_dispatch_group_wake(dsema);
@@ -705,7 +708,7 @@ _dispatch_semaphore_dispose(dispatch_semaphore_t dsema)
 	}
 #endif
 
-	_dispatch_dispose(dsema);
+	_dispatch_dispose(as_do(dsema));
 }
 
 size_t
@@ -713,7 +716,7 @@ _dispatch_semaphore_debug(dispatch_semaphore_t dsema, char *buf, size_t bufsiz)
 {
 	size_t offset = 0;
 	offset += snprintf(&buf[offset], bufsiz - offset, "%s[%p] = { ", dx_kind(dsema), dsema);
-	offset += dispatch_object_debug_attr(dsema, &buf[offset], bufsiz - offset);
+	offset += dispatch_object_debug_attr(as_do(dsema), &buf[offset], bufsiz - offset);
 #if USE_MACH_SEM
 	offset += snprintf(&buf[offset], bufsiz - offset, "port = 0x%u, ",
 	    dsema->dsema_port);
@@ -737,7 +740,7 @@ dispatch_group_async_f(dispatch_group_t dg, dispatch_queue_t dq, void *ctxt, voi
 {
 	dispatch_continuation_t dc;
 
-	_dispatch_retain(dg);
+	_dispatch_retain(as_do(dg));
 	dispatch_group_enter(dg);
 
 	dc = _dispatch_continuation_alloc_cacheonly();
@@ -745,10 +748,10 @@ dispatch_group_async_f(dispatch_group_t dg, dispatch_queue_t dq, void *ctxt, voi
 		dc = _dispatch_continuation_alloc_from_heap();
 	}
 
-	dc->do_vtable = (void *)(DISPATCH_OBJ_ASYNC_BIT|DISPATCH_OBJ_GROUP_BIT);
+	dc->do_vtable = (void *)(uintptr_t)(DISPATCH_OBJ_ASYNC_BIT|DISPATCH_OBJ_GROUP_BIT);
 	dc->dc_func = func;
 	dc->dc_ctxt = ctxt;
 	dc->dc_group = dg;
 
-	_dispatch_queue_push(dq, dc);
+	_dispatch_queue_push(dq, as_do(dc));
 }

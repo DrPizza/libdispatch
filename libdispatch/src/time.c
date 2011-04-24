@@ -57,7 +57,7 @@ dispatch_time(dispatch_time_t inval, int64_t delta)
 		}
 		if ((int64_t)(inval -= delta) >= -1) {
 			// -1 is special == DISPATCH_TIME_FOREVER == forever
-			return -2;      // underflow
+			return (dispatch_time_t)-2;      // underflow
 		}
 		return inval;
 	}
@@ -134,12 +134,12 @@ _dispatch_timeout_ts(dispatch_time_t when)
 
 	if (when == 0) {
 		ret = clock_gettime(CLOCK_REALTIME, &ts_realtime);
-		(void)dispatch_assume_zero(ret);
+		dispatch_assume_zero(ret);
 		return (ts_realtime);
 	}
 	if ((int64_t)when < 0) {
 		ret = clock_gettime(CLOCK_REALTIME, &ts_realtime);
-		(void)dispatch_assume_zero(ret);
+		dispatch_assume_zero(ret);
 		when = -(int64_t)when + ts_realtime.tv_sec * NSEC_PER_SEC +
 		    ts_realtime.tv_nsec;
 		ts_realtime.tv_sec = when / NSEC_PER_SEC;
@@ -154,7 +154,7 @@ _dispatch_timeout_ts(dispatch_time_t when)
 	 */
 	abstime = _dispatch_absolute_time();
 	ret = clock_gettime(CLOCK_REALTIME, &ts_realtime);
-	(void)dispatch_assume_zero(ret);
+	dispatch_assume_zero(ret);
 	realtime = ts_realtime.tv_sec * NSEC_PER_SEC + ts_realtime.tv_nsec +
 	    (when - abstime);
 	ts_realtime.tv_sec = realtime / NSEC_PER_SEC;

@@ -30,7 +30,10 @@
 #include <mach/port.h>
 #include <mach/message.h>
 #endif
+
+#ifndef _MSC_VER
 #include <sys/signal.h>
+#endif
 
 /*!
  * @header
@@ -50,6 +53,8 @@
  * dispatch queues in response to external events.
  */
 DISPATCH_DECL(dispatch_source);
+
+__DISPATCH_BEGIN_DECLS
 
 /*!
  * @typedef dispatch_source_type_t
@@ -123,6 +128,16 @@ const struct dispatch_source_type_s _dispatch_source_type_mach_recv;
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 DISPATCH_EXPORT
 const struct dispatch_source_type_s _dispatch_source_type_proc;
+
+/*!
+ * @const DISPATCH_SOURCE_TYPE_OIO
+ * @discussion A dispatch source that receives overlapped I/O events
+ * The handle is a Win32 HANDLE in overlapped mode.
+ * The mask is unused (pass zero for now).
+ */
+#define DISPATCH_SOURCE_TYPE_OIO (&_dispatch_source_type_oio)
+DISPATCH_EXPORT
+const struct dispatch_source_type_s _dispatch_source_type_oio;
 
 /*!
  * @const DISPATCH_SOURCE_TYPE_READ
@@ -249,8 +264,6 @@ enum {
 	DISPATCH_VNODE_RENAME = 0x20,
 	DISPATCH_VNODE_REVOKE = 0x40,
 };
-
-__DISPATCH_BEGIN_DECLS
 
 /*!
  * @function dispatch_source_create
@@ -491,7 +504,7 @@ dispatch_source_get_handle(dispatch_source_t source);
  */
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_WARN_RESULT DISPATCH_PURE DISPATCH_NOTHROW
-unsigned long
+uintptr_t
 dispatch_source_get_mask(dispatch_source_t source);
 
 /*!
@@ -527,7 +540,7 @@ dispatch_source_get_mask(dispatch_source_t source);
  */
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_WARN_RESULT DISPATCH_PURE DISPATCH_NOTHROW
-unsigned long
+uintptr_t
 dispatch_source_get_data(dispatch_source_t source);
 
 /*!

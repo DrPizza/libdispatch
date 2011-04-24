@@ -34,12 +34,13 @@
 uint64_t _dispatch_get_nanoseconds(void);
 
 #if TARGET_OS_WIN32
-static inline unsigned int
-sleep(unsigned int seconds)
-{
-	Sleep(seconds * 1000); // milliseconds
-	return 0;
-}
+
+#ifdef _MSC_VER
+#define INLINE __forceinline
+#else
+#define INLINE inline
+#endif
+
 #endif
 
 #if (defined(__i386__) || defined(__x86_64__)) && HAVE_MACH_ABSOLUTE_TIME
@@ -55,7 +56,7 @@ typedef struct _dispatch_host_time_data_s {
 __private_extern__ _dispatch_host_time_data_s _dispatch_host_time_data;
 __private_extern__ void _dispatch_get_host_time_init(void *context);
 
-static inline uint64_t
+static INLINE uint64_t
 _dispatch_time_mach2nano(uint64_t machtime)
 {
 	_dispatch_host_time_data_s *const data = &_dispatch_host_time_data;
@@ -64,17 +65,16 @@ _dispatch_time_mach2nano(uint64_t machtime)
 	return (uint64_t)(machtime * data->frac);
 }
 
-static inline int64_t
+static INLINE int64_t
 _dispatch_time_nano2mach(int64_t nsec)
 {
 	_dispatch_host_time_data_s *const data = &_dispatch_host_time_data;
+	long double big_tmp = (long double)nsec;
 	dispatch_once_f(&data->pred, NULL, _dispatch_get_host_time_init);
 
 	if (slowpath(_dispatch_host_time_data.ratio_1_to_1)) {
 		return nsec;
 	}
-
-	long double big_tmp = (long double)nsec;
 
 	// Divide by tbi.numer/tbi.denom to convert nsec to Mach absolute time
 	big_tmp /= data->frac;
@@ -90,7 +90,7 @@ _dispatch_time_nano2mach(int64_t nsec)
 }
 #endif
 
-static inline uint64_t
+static INLINE uint64_t
 _dispatch_absolute_time(void)
 {
 #if HAVE_MACH_ABSOLUTE_TIME
@@ -112,7 +112,7 @@ _dispatch_absolute_time(void)
 #else
 #error "clock_gettime: no supported absolute time clock"
 #endif
-	(void)dispatch_assume_zero(ret);
+	dispatch_assume_zero(ret);
 
 	/* XXXRW: Some kind of overflow detection needed? */
 	return (ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec);

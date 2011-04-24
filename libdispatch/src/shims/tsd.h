@@ -83,7 +83,7 @@ _dispatch_thread_getspecific(unsigned long k)
 
 #else /* !USE_APPLE_TSD_OPTIMIZATIONS */
 
-static inline void
+static INLINE void
 _dispatch_thread_setspecific(pthread_key_t k, void *v)
 {
 	int res;
@@ -92,7 +92,7 @@ _dispatch_thread_setspecific(pthread_key_t k, void *v)
 	dispatch_assert_zero(res);
 }
 
-static inline void *
+static INLINE void *
 _dispatch_thread_getspecific(pthread_key_t k)
 {
 
@@ -107,7 +107,7 @@ _dispatch_thread_key_init_np(unsigned long k, void (*d)(void *))
 	dispatch_assert_zero(pthread_key_init_np((int)k, d));
 }
 #else
-static inline void
+static INLINE void
 _dispatch_thread_key_create(pthread_key_t *key, void (*destructor)(void *))
 {
 

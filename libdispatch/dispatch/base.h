@@ -38,6 +38,7 @@ private:
 	void operator=(const dispatch_object_s &);
 } *dispatch_object_t;
 #else
+#ifdef __GNUC__
 typedef union {
 	struct dispatch_object_s *_do;
 	struct dispatch_continuation_s *_dc;
@@ -48,9 +49,33 @@ typedef union {
 	struct dispatch_source_attr_s *_dsa;
 	struct dispatch_semaphore_s *_dsema;
 } dispatch_object_t __attribute__((transparent_union));
+
+static __forceinline dispatch_object_t as_do(dispatch_object_t do_)
+{
+	return do_;
+}
+#else
+typedef union {
+	struct dispatch_object_s *_do;
+	struct dispatch_continuation_s *_dc;
+	struct dispatch_queue_s *_dq;
+	struct dispatch_queue_attr_s *_dqa;
+	struct dispatch_group_s *_dg;
+	struct dispatch_source_s *_ds;
+	struct dispatch_source_attr_s *_dsa;
+	struct dispatch_semaphore_s *_dsema;
+} dispatch_object_t;
+
+static __forceinline dispatch_object_t as_do(void* v)
+{
+	dispatch_object_t do_ = { v };
+	return do_;
+}
+#endif
 #endif
 
 typedef void (*dispatch_function_t)(void *);
+typedef void (*dispatch_function_apply_t)(void*, size_t);
 
 #ifdef __cplusplus
 #define DISPATCH_DECL(name) typedef struct name##_s : public dispatch_object_s {} *name##_t

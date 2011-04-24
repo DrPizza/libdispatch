@@ -27,8 +27,12 @@
 #ifndef __DISPATCH_KEVENT_INTERNAL__
 #define __DISPATCH_KEVENT_INTERNAL__
 
-#include <internal.h>
+#include "internal.h"
+#if !TARGET_OS_WIN32
 #include <sys/event.h>
+#else
+#include "platform/windows/sys/event.h"
+#endif
 
 struct dispatch_kevent_s {
 	TAILQ_ENTRY(dispatch_kevent_s) dk_list;

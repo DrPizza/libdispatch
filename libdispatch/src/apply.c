@@ -31,7 +31,7 @@ struct dispatch_apply_s {
 	void	*da_ctxt;
 	size_t	da_iterations;
 	size_t	da_index;
-	uint32_t	da_thr_cnt;
+	uintptr_t	da_thr_cnt;
 	dispatch_semaphore_t da_sema;
 	long	_da_pad1[DISPATCH_CACHELINE_SIZE / sizeof(long)];
 };
@@ -41,7 +41,7 @@ _dispatch_apply2(void *_ctxt)
 {
 	struct dispatch_apply_s *da = _ctxt;
 	size_t const iter = da->da_iterations;
-	typeof(da->da_func) const func = da->da_func;
+	void (*func)(void*, size_t) = da->da_func;
 	void *const ctxt = da->da_ctxt;
 	size_t idx;
 
@@ -124,11 +124,11 @@ dispatch_apply_f(size_t iterations, dispatch_queue_t dq, void *ctxt, void (*func
 
 	// some queues are easy to borrow and some are not
 	if (slowpath(dq->do_targetq)) {
-		_dispatch_queue_push_list(dq, (void *)&da_dc[0], (void *)&da_dc[da.da_thr_cnt - 1]);
+		_dispatch_queue_push_list(dq, as_do((void *)&da_dc[0]), as_do((void *)&da_dc[da.da_thr_cnt - 1]));
 	} else {
 		dispatch_queue_t old_dq = _dispatch_thread_getspecific(dispatch_queue_key);
 		// root queues are always concurrent and safe to borrow
-		_dispatch_queue_push_list(dq, (void *)&da_dc[1], (void *)&da_dc[da.da_thr_cnt - 1]);
+		_dispatch_queue_push_list(dq, as_do((void *)&da_dc[1]), as_do((void *)&da_dc[da.da_thr_cnt - 1]));
 		_dispatch_thread_setspecific(dispatch_queue_key, dq);
 		// The first da_dc[] element was explicitly not pushed on to the queue.
 		// We need to either call it like so:

@@ -82,15 +82,15 @@ struct dispatch_source_s {
 			ds_cancel_is_block:1,
 			ds_handler_is_block:1;
 
-			unsigned int ds_atomic_flags;
+			uintptr_t ds_atomic_flags;
 
-			unsigned long ds_data;
-			unsigned long ds_pending_data;
-			unsigned long ds_pending_data_mask;
+			uintptr_t ds_data;
+			uintptr_t ds_pending_data;
+			uintptr_t ds_pending_data_mask;
 			
 			TAILQ_ENTRY(dispatch_source_s) ds_list;
 			
-			unsigned long ds_ident_hack;
+			uintptr_t ds_ident_hack;
 			
 			struct dispatch_timer_source_s ds_timer;
 		};
@@ -114,9 +114,9 @@ struct dispatch_source_type_s {
         uint64_t mask;
         bool (*init) (dispatch_source_t ds,
                       dispatch_source_type_t type,
-		      uintptr_t handle,
-		      unsigned long mask,
-		      dispatch_queue_t q);
+                      uintptr_t handle,
+                      unsigned long mask,
+                      dispatch_queue_t q);
 };
 
 #define DISPATCH_TIMER_INDEX_WALL 0
@@ -131,11 +131,13 @@ enum {
         DISPATCH_TIMER_ONESHOT  = 0x1,
         DISPATCH_TIMER_ABSOLUTE = 0x3,
 };
+#if HAVE_MACH
 enum {
         DISPATCH_MACHPORT_DEAD = 0x1,
         DISPATCH_MACHPORT_RECV = 0x2,
         DISPATCH_MACHPORT_DELETED = 0x4,
 };
+#endif
 #endif
 
 
@@ -154,5 +156,7 @@ extern const struct dispatch_source_type_s _dispatch_source_type_mach_recv;
 
 extern const struct dispatch_source_type_s _dispatch_source_type_data_add;
 extern const struct dispatch_source_type_s _dispatch_source_type_data_or;
+
+extern const struct dispatch_source_type_s _dispatch_source_type_oio;
 
 #endif /* __DISPATCH_SOURCE_INTERNAL__ */

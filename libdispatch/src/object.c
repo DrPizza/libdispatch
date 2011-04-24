@@ -38,7 +38,7 @@ dispatch_debugv(dispatch_object_t dou, const char *msg, va_list ap)
 	char buf[4096];
 	size_t offs;
 
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	if (obj && obj->do_vtable->do_debug) {
 		offs = dx_debug(obj, buf, sizeof(buf));
@@ -54,7 +54,7 @@ dispatch_debugv(dispatch_object_t dou, const char *msg, va_list ap)
 void
 dispatch_retain(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	if (obj->do_xref_cnt == DISPATCH_OBJECT_GLOBAL_REFCNT) {
 		return; // global object
@@ -67,7 +67,7 @@ dispatch_retain(dispatch_object_t dou)
 void
 _dispatch_retain(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	if (obj->do_ref_cnt == DISPATCH_OBJECT_GLOBAL_REFCNT) {
 		return; // global object
@@ -80,9 +80,9 @@ _dispatch_retain(dispatch_object_t dou)
 void
 dispatch_release(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
-	unsigned int oldval;
+	uintptr_t oldval;
 
 	if (obj->do_xref_cnt == DISPATCH_OBJECT_GLOBAL_REFCNT) {
 		return;
@@ -101,7 +101,7 @@ dispatch_release(dispatch_object_t dou)
 			// Arguments for and against this assert are within 6705399
 			DISPATCH_CLIENT_CRASH("Release of a suspended object");
 		}
-		return _dispatch_release(obj);
+		return _dispatch_release(as_do(obj));
 	}
 	DISPATCH_CLIENT_CRASH("Over-release of an object");
 }
@@ -109,28 +109,28 @@ dispatch_release(dispatch_object_t dou)
 void
 _dispatch_dispose(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	dispatch_queue_t tq = obj->do_targetq;
 	dispatch_function_t func = obj->do_finalizer;
 	void *ctxt = obj->do_ctxt;
 
-	obj->do_vtable = (struct dispatch_object_vtable_s *)0x200;
+	obj->do_vtable = (struct dispatch_object_vtable_s *)(uintptr_t)0x200;
 
 	free(obj);
 
 	if (func && ctxt) {
 		dispatch_async_f(tq, ctxt, func);
 	}
-	_dispatch_release(tq);
+	_dispatch_release(as_do(tq));
 }
 
 void
 _dispatch_release(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
-	unsigned int oldval;
+	uintptr_t oldval;
 
 	if (obj->do_ref_cnt == DISPATCH_OBJECT_GLOBAL_REFCNT) {
 		return; // global object
@@ -157,7 +157,7 @@ _dispatch_release(dispatch_object_t dou)
 void *
 dispatch_get_context(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	return obj->do_ctxt;
 }
@@ -165,7 +165,7 @@ dispatch_get_context(dispatch_object_t dou)
 void
 dispatch_set_context(dispatch_object_t dou, void *context)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	if (obj->do_ref_cnt != DISPATCH_OBJECT_GLOBAL_REFCNT) {
 		obj->do_ctxt = context;
@@ -175,7 +175,7 @@ dispatch_set_context(dispatch_object_t dou, void *context)
 void
 dispatch_set_finalizer_f(dispatch_object_t dou, dispatch_function_t finalizer)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	obj->do_finalizer = finalizer;
 }
@@ -183,7 +183,7 @@ dispatch_set_finalizer_f(dispatch_object_t dou, dispatch_function_t finalizer)
 void
 dispatch_suspend(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	if (slowpath(obj->do_ref_cnt == DISPATCH_OBJECT_GLOBAL_REFCNT)) {
 		return;
@@ -194,7 +194,7 @@ dispatch_suspend(dispatch_object_t dou)
 void
 dispatch_resume(dispatch_object_t dou)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	// Global objects cannot be suspended or resumed. This also has the
 	// side effect of saturating the suspend count of an object and
@@ -209,7 +209,7 @@ dispatch_resume(dispatch_object_t dou)
 	// has been over-resumed.
 	switch (dispatch_atomic_sub(&obj->do_suspend_cnt, DISPATCH_OBJECT_SUSPEND_INTERVAL) + DISPATCH_OBJECT_SUSPEND_INTERVAL) {
 	case DISPATCH_OBJECT_SUSPEND_INTERVAL:
-		_dispatch_wakeup(obj);
+		_dispatch_wakeup(as_do(obj));
 		break;
 	case DISPATCH_OBJECT_SUSPEND_LOCK:
 	case 0:
@@ -223,7 +223,7 @@ dispatch_resume(dispatch_object_t dou)
 size_t
 dispatch_object_debug_attr(dispatch_object_t dou, char* buf, size_t bufsiz)
 {
-	struct dispatch_object_s *obj = DO_CAST(dou);
+	struct dispatch_object_s *obj = dou._do;
 
 	return snprintf(buf, bufsiz, "refcnt = 0x%x, suspend_cnt = 0x%x, ",
 					obj->do_ref_cnt, obj->do_suspend_cnt);

@@ -45,7 +45,7 @@
 #define DISPATCH_OBJ_BARRIER_BIT	0x2
 #define DISPATCH_OBJ_GROUP_BIT	0x4
 // vtables are pointers far away from the low page in memory
-#define DISPATCH_OBJ_IS_VTABLE(x)	((unsigned long)(x)->do_vtable > 127ul)
+#define DISPATCH_OBJ_IS_VTABLE(x)	((uintptr_t)(x)->do_vtable > 127ul)
 
 struct dispatch_continuation_s {
 	DISPATCH_CONTINUATION_HEADER(dispatch_continuation_s);
@@ -73,12 +73,12 @@ struct dispatch_queue_vtable_s {
 	dispatch_queue_finalizer_function_t dq_finalizer_func
 #else
 #define DISPATCH_QUEUE_HEADER \
-	uint32_t dq_running; \
-	uint32_t dq_width; \
+	uintptr_t dq_running; \
+	uintptr_t dq_width; \
 	struct dispatch_object_s *dq_items_tail; \
 	struct dispatch_object_s *volatile dq_items_head; \
-	unsigned long dq_serialnum; \
-	void *dq_finalizer_ctxt;
+	uintptr_t dq_serialnum; \
+	void *dq_finalizer_ctxt
 #endif
 
 struct dispatch_queue_s {
@@ -99,14 +99,18 @@ void _dispatch_queue_push_list_slow(dispatch_queue_t dq, struct dispatch_object_
 void _dispatch_queue_serial_drain_till_empty(dispatch_queue_t dq);
 void _dispatch_force_cache_cleanup(void);
 
-__attribute__((always_inline))
-static inline void
+#ifdef __GNUC__
+__attribute__((always_inline)) inline
+#else
+__forceinline
+#endif
+static void
 _dispatch_queue_push_list(dispatch_queue_t dq, dispatch_object_t _head, dispatch_object_t _tail)
 {
 	struct dispatch_object_s *prev, *head = _head._do, *tail = _tail._do;
 
 	tail->do_next = NULL;
-	prev = fastpath(dispatch_atomic_xchg(&dq->dq_items_tail, tail));
+	prev = fastpath(dispatch_atomic_xchg_pointer(&dq->dq_items_tail, tail));
 	if (prev) {
 		// if we crash here with a value less than 0x1000, then we are at a known bug in client code
 		// for example, see _dispatch_queue_dispose or _dispatch_atfork_child
@@ -120,16 +124,22 @@ _dispatch_queue_push_list(dispatch_queue_t dq, dispatch_object_t _head, dispatch
 
 #define DISPATCH_QUEUE_PRIORITY_COUNT 3
 
+#ifdef __GNUC__
+#define UNUSED 	__attribute__((unused))
+#else
+#define UNUSED
+#endif
+
 #if DISPATCH_DEBUG
 void dispatch_debug_queue(dispatch_queue_t dq, const char* str);
 #else
-static inline void dispatch_debug_queue(dispatch_queue_t dq __attribute__((unused)), const char* str __attribute__((unused))) {}
+static INLINE void dispatch_debug_queue(dispatch_queue_t dq UNUSED, const char* str UNUSED) {}
 #endif
 
 size_t dispatch_queue_debug(dispatch_queue_t dq, char* buf, size_t bufsiz);
 size_t dispatch_queue_debug_attr(dispatch_queue_t dq, char* buf, size_t bufsiz);
 
-static inline dispatch_queue_t
+static INLINE dispatch_queue_t
 _dispatch_queue_get_current(void)
 {
 	return _dispatch_thread_getspecific(dispatch_queue_key);
@@ -138,7 +148,7 @@ _dispatch_queue_get_current(void)
 __private_extern__ malloc_zone_t *_dispatch_ccache_zone;
 dispatch_continuation_t _dispatch_continuation_alloc_from_heap(void);
 
-static inline dispatch_continuation_t
+static INLINE dispatch_continuation_t
 _dispatch_continuation_alloc_cacheonly(void)
 {
 	dispatch_continuation_t dc = fastpath(_dispatch_thread_getspecific(dispatch_cache_key));

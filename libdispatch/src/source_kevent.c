@@ -24,7 +24,6 @@
 #include "protocol.h"
 #include "protocolServer.h"
 #endif
-#include <sys/mount.h>
 
 #define DISPATCH_EVFILT_TIMER	(-EVFILT_SYSCOUNT - 1)
 #define DISPATCH_EVFILT_CUSTOM_ADD	(-EVFILT_SYSCOUNT - 2)
@@ -33,38 +32,55 @@
 
 static struct dispatch_kevent_s _dispatch_kevent_timer[] = {
 	{
-		.dk_kevent = {
-			.ident = DISPATCH_TIMER_INDEX_WALL,
-			.filter = DISPATCH_EVFILT_TIMER,
-			.udata = &_dispatch_kevent_timer[0],
-		},
-		.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_timer[0].dk_sources),
+		/* .dk_list    = */	{ NULL, NULL },
+		/* .dk_sources = */	TAILQ_HEAD_INITIALIZER(_dispatch_kevent_timer[0].dk_sources),
+		/* .kevent     = */ {
+			/* .ident  = */ 	DISPATCH_TIMER_INDEX_WALL,
+			/* .filter = */ 	DISPATCH_EVFILT_TIMER,
+			/* .flags  = */ 	0,
+			/* .fflags = */ 	0,
+			/* .data   = */ 	0,
+			/* .udata  = */ 	&_dispatch_kevent_timer[0]
+		                    }
 	},
 	{
-		.dk_kevent = {
-			.ident = DISPATCH_TIMER_INDEX_MACH,
-			.filter = DISPATCH_EVFILT_TIMER,
-			.udata = &_dispatch_kevent_timer[1],
-		},
-		.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_timer[1].dk_sources),
-	},
+		/* .dk_list    = */	{ NULL, NULL },
+		/* .dk_sources = */	TAILQ_HEAD_INITIALIZER(_dispatch_kevent_timer[1].dk_sources),
+		/* .kevent     = */ {
+			/* .ident  = */ 	DISPATCH_TIMER_INDEX_MACH,
+			/* .filter = */ 	DISPATCH_EVFILT_TIMER,
+			/* .flags  = */ 	0,
+			/* .fflags = */ 	0,
+			/* .data   = */ 	0,
+			/* .udata  = */ 	&_dispatch_kevent_timer[1]
+		                    }
+	}
 };
 #define DISPATCH_TIMER_COUNT (sizeof _dispatch_kevent_timer / sizeof _dispatch_kevent_timer[0])
 
 static struct dispatch_kevent_s _dispatch_kevent_data_or = {
-	.dk_kevent = {
-		.filter = DISPATCH_EVFILT_CUSTOM_OR,
-		.flags = EV_CLEAR,
-		.udata = &_dispatch_kevent_data_or,
-	},
-	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
+	/* .dk_list    = */	{ NULL, NULL },
+	/* .dk_sources = */	TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
+	/* .kevent     = */ {
+		/* .ident  = */ 	0,
+		/* .filter = */ 	DISPATCH_EVFILT_CUSTOM_OR,
+		/* .flags  = */ 	EV_CLEAR,
+		/* .fflags = */ 	0,
+		/* .data   = */ 	0,
+		/* .udata  = */ 	&_dispatch_kevent_data_or
+	                    }
 };
 static struct dispatch_kevent_s _dispatch_kevent_data_add = {
-	.dk_kevent = {
-		.filter = DISPATCH_EVFILT_CUSTOM_ADD,
-		.udata = &_dispatch_kevent_data_add,
-	},
-	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
+	/* .dk_list    = */	{ NULL, NULL },
+	/* .dk_sources = */	TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
+	/* .kevent     = */ {
+		/* .ident  = */ 	0,
+		/* .filter = */ 	DISPATCH_EVFILT_CUSTOM_ADD,
+		/* .flags  = */ 	EV_CLEAR,
+		/* .fflags = */ 	0,
+		/* .data   = */ 	0,
+		/* .udata  = */ 	&_dispatch_kevent_data_add
+	                    }
 };
 
 static void _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke);
@@ -104,7 +120,7 @@ _evfiltstr(short filt)
 #if HAVE_DECL_EVFILT_LIO
 	_evfilt2(EVFILT_LIO);
 #endif
-
+	_evfilt2(EVFILT_OIO);
 	_evfilt2(DISPATCH_EVFILT_TIMER);
 	_evfilt2(DISPATCH_EVFILT_CUSTOM_ADD);
 	_evfilt2(DISPATCH_EVFILT_CUSTOM_OR);
@@ -118,7 +134,7 @@ _evfiltstr(short filt)
 
 static TAILQ_HEAD(, dispatch_kevent_s) _dispatch_sources[DSL_HASH_SIZE];
 
-static inline uintptr_t
+static INLINE uintptr_t
 _dispatch_kevent_hash(uintptr_t ident, short filter)
 {
 	uintptr_t value;
@@ -175,7 +191,7 @@ _dispatch_source_kevent_debug(dispatch_source_t ds, char* buf, size_t bufsiz)
 }
 
 static void
-_dispatch_source_init_tail_queue_array(void *context __attribute__((unused)))
+_dispatch_source_init_tail_queue_array(void *context UNUSED)
 {
 	unsigned int i;
 	for (i = 0; i < DSL_HASH_SIZE; i++) {
@@ -194,7 +210,7 @@ _dispatch_kevent_merge(dispatch_source_t ds)
 {
 	static dispatch_once_t pred;
 	dispatch_kevent_t dk;
-	typeof(dk->dk_kevent.fflags) new_flags;
+	uint32_t new_flags;
 	bool do_resume = false;
 
 	if (ds->ds_is_installed) {
@@ -213,7 +229,7 @@ _dispatch_kevent_merge(dispatch_source_t ds)
 		dk->dk_kevent.fflags |= ds->ds_dkev->dk_kevent.fflags;
 		free(ds->ds_dkev);
 		ds->ds_dkev = dk;
-		do_resume = new_flags;
+		do_resume = new_flags != 0;
 	} else {
 		dk = ds->ds_dkev;
 		_dispatch_kevent_insert(dk);
@@ -416,7 +432,7 @@ _dispatch_source_drain_kevent(struct kevent *ke)
 	dispatch_once_f(&pred, NULL, _dispatch_kevent_debugger);
 #endif
 
-	dispatch_debug_kevents(ke, 1, __func__);
+	dispatch_debug_kevents(ke, 1, __FUNCTION__);
 
 #if HAVE_MACH
 	if (ke->filter == EVFILT_MACHPORT) {
@@ -496,7 +512,7 @@ _dispatch_kevent_release(dispatch_source_t ds)
 
 	ds->ds_is_armed = false;
 	ds->ds_needs_rearm = false;	// re-arm is pointless and bad now
-	_dispatch_release(ds);	// the retain is done at creation time
+	_dispatch_release(as_do(ds));	// the retain is done at creation time
 }
 
 void
@@ -519,7 +535,7 @@ _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke)
 			ke = &fake;
 		} else {
 			// log the unexpected error
-			(void)dispatch_assume_zero(ke->data);
+			dispatch_assume_zero(ke->data);
 			return;
 		}
 	}
@@ -541,24 +557,27 @@ _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke)
 		ds->ds_is_armed = false;
 	}
 
-	_dispatch_wakeup(ds);
+	_dispatch_wakeup(as_do(ds));
 }
 
 const struct dispatch_source_vtable_s _dispatch_source_kevent_vtable = {
-	.do_type = DISPATCH_SOURCE_KEVENT_TYPE,
-	.do_kind = "kevent-source",
-	.do_invoke = _dispatch_source_invoke,
-	.do_dispose = _dispatch_source_dispose,
-	.do_probe = _dispatch_source_probe,
-	.do_debug = _dispatch_source_kevent_debug,
+	/*.do_type    = */	DISPATCH_SOURCE_KEVENT_TYPE,
+	/*.do_kind    = */	"kevent-source",
+	/*.do_debug   = */	_dispatch_source_debug,
+	/*.do_invoke  = */	_dispatch_source_invoke,
+	/*.do_probe   = */	_dispatch_source_probe,
+	/*.do_dispose = */	_dispatch_source_dispose,
 };
 
 void
 dispatch_source_merge_data(dispatch_source_t ds, unsigned long val)
 {	
 	struct kevent kev = {
-		.fflags = (typeof(kev.fflags))val,
-		.data = val,
+		/* .ident  = */	0,
+		/* .filter = */	0,
+		/* .flags  = */	0,
+		/* .fflags = */	(u_int)val,
+		/* .data   = */	val,
 	};
 
 	dispatch_assert(ds->ds_dkev->dk_kevent.filter == DISPATCH_EVFILT_CUSTOM_ADD ||
@@ -629,98 +648,118 @@ dispatch_source_type_timer_init(dispatch_source_t ds, dispatch_source_type_t typ
 }
 
 static const struct kevent _dispatch_source_type_timer_ke = {
-	.filter = DISPATCH_EVFILT_TIMER,
+	/* .ident  = */	0,
+	/* .filter = */	DISPATCH_EVFILT_TIMER,
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_timer = {
-	.opaque = (void *)&_dispatch_source_type_timer_ke,
-	.mask = DISPATCH_TIMER_INTERVAL|DISPATCH_TIMER_ONESHOT|DISPATCH_TIMER_ABSOLUTE|DISPATCH_TIMER_WALL_CLOCK,
-	.init = dispatch_source_type_timer_init,
+	/* .opaque = */	(void *)&_dispatch_source_type_timer_ke,
+	/* .mask   = */	DISPATCH_TIMER_INTERVAL|DISPATCH_TIMER_ONESHOT|DISPATCH_TIMER_ABSOLUTE|DISPATCH_TIMER_WALL_CLOCK,
+	/* .init   = */	dispatch_source_type_timer_init,
+};
+
+static const struct kevent _dispatch_source_type_oio_ke = {
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_OIO,
+	/* .flags  = */	EV_DISPATCH
+};
+
+const struct dispatch_source_type_s _dispatch_source_type_oio = {
+	/* .opaque = */	(void *)&_dispatch_source_type_oio_ke,
+	/* .mask   = */	0,
+	/* .init   = */	dispatch_source_type_kevent_init,
 };
 
 static const struct kevent _dispatch_source_type_read_ke = {
-	.filter = EVFILT_READ,
-	.flags = EV_DISPATCH,
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_READ,
+	/* .flags  = */	EV_DISPATCH
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_read = {
-	.opaque = (void *)&_dispatch_source_type_read_ke,
-	.init = dispatch_source_type_kevent_init,
+	/* .opaque = */	(void *)&_dispatch_source_type_read_ke,
+	/* .mask   = */	0,
+	/* .init   = */	dispatch_source_type_kevent_init
 };
 
 static const struct kevent _dispatch_source_type_write_ke = {
-	.filter = EVFILT_WRITE,
-	.flags = EV_DISPATCH,
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_WRITE,
+	/* .flags  = */	EV_DISPATCH
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_write = {
-	.opaque = (void *)&_dispatch_source_type_write_ke,
-	.init = dispatch_source_type_kevent_init,
+	/* .opaque = */	(void *)&_dispatch_source_type_write_ke,
+	/* .mask   = */	0,
+	/* .init   = */	dispatch_source_type_kevent_init
 };
 
 static const struct kevent _dispatch_source_type_proc_ke = {
-	.filter = EVFILT_PROC,
-	.flags = EV_CLEAR,
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_PROC,
+	/* .flags  = */	EV_CLEAR
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_proc = {
-	.opaque = (void *)&_dispatch_source_type_proc_ke,
-	.mask = NOTE_EXIT|NOTE_FORK|NOTE_EXEC
+	/* .opaque = */	(void *)&_dispatch_source_type_proc_ke,
+	/* .mask   = */	NOTE_EXIT|NOTE_FORK|NOTE_EXEC
 #if HAVE_DECL_NOTE_SIGNAL
-	    |NOTE_SIGNAL
+	               	|NOTE_SIGNAL
 #endif
 #if HAVE_DECL_NOTE_REAP
-	    |NOTE_REAP
+	               	|NOTE_REAP
 #endif
-	    ,
-	.init = dispatch_source_type_kevent_init,
+	               	,
+	/* .init   = */	dispatch_source_type_kevent_init
 };
 
 static const struct kevent _dispatch_source_type_signal_ke = {
-	.filter = EVFILT_SIGNAL,
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_SIGNAL
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_signal = {
-	.opaque = (void *)&_dispatch_source_type_signal_ke,
-	.init = dispatch_source_type_kevent_init,
+	/* .opaque = */	(void *)&_dispatch_source_type_signal_ke,
+	/* .mask   = */	0,
+	/* .init   = */	dispatch_source_type_kevent_init
 };
 
 static const struct kevent _dispatch_source_type_vnode_ke = {
-	.filter = EVFILT_VNODE,
-	.flags = EV_CLEAR,
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_VNODE,
+	/* .flags  = */	EV_CLEAR
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_vnode = {
-	.opaque = (void *)&_dispatch_source_type_vnode_ke,
-	.mask = NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
-	    NOTE_RENAME
+	/* .opaque = */	(void *)&_dispatch_source_type_vnode_ke,
+	/* .mask   = */	NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME
 #if HAVE_DECL_NOTE_REVOKE
-	    |NOTE_REVOKE
+	               	|NOTE_REVOKE
 #endif
 #if HAVE_DECL_NOTE_NONE
-	    |NOTE_NONE
+	               	|NOTE_NONE
 #endif
-	    ,
-	.init = dispatch_source_type_kevent_init,
+	               	,
+	/* .init   = */	dispatch_source_type_kevent_init
 };
 
 static const struct kevent _dispatch_source_type_vfs_ke = {
-	.filter = EVFILT_FS,
-	.flags = EV_CLEAR,
+	/* .ident  = */	0,
+	/* .filter = */	EVFILT_FS,
+	/* .flags  = */	EV_CLEAR
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_vfs = {
-	.opaque = (void *)&_dispatch_source_type_vfs_ke,
-	.mask = VQ_NOTRESP|VQ_NEEDAUTH|VQ_LOWDISK|VQ_MOUNT|VQ_UNMOUNT|VQ_DEAD|
-	    VQ_ASSIST|VQ_NOTRESPLOCK
+	/* .opaque = */	(void *)&_dispatch_source_type_vfs_ke,
+	/* .mask   = */	VQ_NOTRESP|VQ_NEEDAUTH|VQ_LOWDISK|VQ_MOUNT|VQ_UNMOUNT|VQ_DEAD|VQ_ASSIST|VQ_NOTRESPLOCK
 #if HAVE_DECL_VQ_UPDATE
-	    |VQ_UPDATE
+	               	|VQ_UPDATE
 #endif
 #if HAVE_DECL_VQ_VERYLOWDISK
-	    |VQ_VERYLOWDISK
+	               	|VQ_VERYLOWDISK
 #endif
-	    ,
-	.init = dispatch_source_type_kevent_init,
+	               	,
+	/* .init   = */	dispatch_source_type_kevent_init
 };
 
 #if HAVE_MACH
@@ -773,23 +812,27 @@ const struct dispatch_source_type_s _dispatch_source_type_mach_recv = {
 #endif
 
 static const struct kevent _dispatch_source_type_data_add_ke = {
-	.filter = DISPATCH_EVFILT_CUSTOM_ADD,
+	/* .ident  = */	0,
+	/* .filter = */	DISPATCH_EVFILT_CUSTOM_ADD,
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_data_add = {
-	.opaque = (void *)&_dispatch_source_type_data_add_ke,
-	.init = dispatch_source_type_kevent_init,
+	/* .opaque = */	(void *)&_dispatch_source_type_data_add_ke,
+	/* .mask   = */	0,
+	/* .init   = */	dispatch_source_type_kevent_init,
 };
 
 static const struct kevent _dispatch_source_type_data_or_ke = {
-	.filter = DISPATCH_EVFILT_CUSTOM_OR,
-	.flags = EV_CLEAR,
-	.fflags = ~0,
+	/* .ident  = */	0,
+	/* .filter = */	DISPATCH_EVFILT_CUSTOM_OR,
+	/* .flags  = */	EV_CLEAR,
+	/* .fflags = */	~0U,
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_data_or = {
-	.opaque = (void *)&_dispatch_source_type_data_or_ke,
-	.init = dispatch_source_type_kevent_init,
+	/* .opaque = */	(void *)&_dispatch_source_type_data_or_ke,
+	/* .mask   = */	0,
+	/* .init   = */	dispatch_source_type_kevent_init,
 };
 
 // Updates the ordered list of timers based on next fire date for changes to ds.
@@ -875,7 +918,7 @@ _dispatch_run_timers2(unsigned int timer)
 		}
 
 		_dispatch_timer_list_update(ds);
-		_dispatch_wakeup(ds);
+		_dispatch_wakeup(as_do(ds));
 	}
 }
 

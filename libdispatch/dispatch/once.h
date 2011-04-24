@@ -35,7 +35,7 @@ __DISPATCH_BEGIN_DECLS
  * A predicate for use with dispatch_once(). It must be initialized to zero.
  * Note: static and global variables default to zero.
  */
-typedef long dispatch_once_t;
+typedef intptr_t dispatch_once_t;
 
 /*!
  * @function dispatch_once

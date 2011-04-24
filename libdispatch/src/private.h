@@ -42,7 +42,11 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
+#ifndef WIN32
 #include <pthread.h>
+#else
+#include "platform/windows/pthread.h"
+#endif
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 /* iPhone OS does not make any legacy definitions visible */
@@ -121,10 +125,12 @@ void (*_dispatch_end_NSAutoReleasePool)(void *);
 
 /* pthreads magic */
 
+#if !TARGET_OS_WIN32
 DISPATCH_NOTHROW void dispatch_atfork_prepare(void);
 DISPATCH_NOTHROW void dispatch_atfork_parent(void);
 DISPATCH_NOTHROW void dispatch_atfork_child(void);
 DISPATCH_NOTHROW void dispatch_init_pthread(pthread_t);
+#endif
 
 #if HAVE_MACH
 /*

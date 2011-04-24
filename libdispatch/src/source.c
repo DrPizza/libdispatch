@@ -23,7 +23,6 @@
 #include "protocol.h"
 #include "protocolServer.h"
 #endif
-#include <sys/mount.h>
 
 #ifndef DISPATCH_NO_LEGACY
 struct dispatch_source_attr_vtable_s {
@@ -54,10 +53,10 @@ dispatch_source_cancel(dispatch_source_t ds)
 	// unregister the source, and deallocate it. We would
 	// need to therefore retain/release before setting the bit
 
-	_dispatch_retain(ds);
-	dispatch_atomic_or(&ds->ds_atomic_flags, DSF_CANCELED);
-	_dispatch_wakeup(ds);
-	_dispatch_release(ds);
+	_dispatch_retain(as_do(ds));
+	dispatch_atomic_or(&ds->ds_atomic_flags, (uintptr_t)DSF_CANCELED);
+	_dispatch_wakeup(as_do(ds));
+	_dispatch_release(as_do(ds));
 }
 
 DISPATCH_NOINLINE
@@ -77,8 +76,8 @@ _dispatch_source_xref_release(dispatch_source_t ds)
 		// Arguments for and against this assert are within 6705399
 		DISPATCH_CLIENT_CRASH("Release of a suspended object");
 	}
-	_dispatch_wakeup(ds);
-	_dispatch_release(ds);
+	_dispatch_wakeup(as_do(ds));
+	_dispatch_release(as_do(ds));
 }
 
 long
@@ -87,8 +86,7 @@ dispatch_source_testcancel(dispatch_source_t ds)
 	return (bool)(ds->ds_atomic_flags & DSF_CANCELED);
 }
 
-
-unsigned long
+uintptr_t
 dispatch_source_get_mask(dispatch_source_t ds)
 {
 	return ds->ds_pending_data_mask;
@@ -97,10 +95,10 @@ dispatch_source_get_mask(dispatch_source_t ds)
 uintptr_t
 dispatch_source_get_handle(dispatch_source_t ds)
 {
-	return (int)ds->ds_ident_hack;
+	return ds->ds_ident_hack;
 }
 
-unsigned long
+uintptr_t
 dispatch_source_get_data(dispatch_source_t ds)
 {
 	return ds->ds_data;
@@ -199,7 +197,7 @@ _dispatch_source_dispose(dispatch_source_t ds)
 void
 _dispatch_source_latch_and_call(dispatch_source_t ds)
 {
-	unsigned long prev;
+	uintptr_t prev;
 
 	if ((ds->ds_atomic_flags & DSF_CANCELED) || (ds->do_xref_cnt == 0)) {
 		return;
@@ -210,7 +208,8 @@ _dispatch_source_latch_and_call(dispatch_source_t ds)
 	} else {
 		ds->ds_data = prev;
 	}
-	if (dispatch_assume(prev)) {
+	dispatch_assume(prev);
+	if(prev){
 		if (ds->ds_handler_func) {
 #ifndef DISPATCH_NO_LEGACY
 			((dispatch_source_handler_function_t)ds->ds_handler_func)(ds->ds_handler_ctxt, ds);
@@ -273,7 +272,7 @@ _dispatch_source_debug(dispatch_source_t ds, char* buf, size_t bufsiz)
 {
         size_t offset = 0;
         offset += snprintf(&buf[offset], bufsiz - offset, "%s[%p] = { ", dx_kind(ds), ds);
-        offset += dispatch_object_debug_attr(ds, &buf[offset], bufsiz - offset);
+        offset += dispatch_object_debug_attr(as_do(ds), &buf[offset], bufsiz - offset);
         offset += dispatch_source_debug_attr(ds, &buf[offset], bufsiz - offset);
         return offset;
 }
@@ -424,7 +423,7 @@ dispatch_source_create(dispatch_source_type_t type,
 	dispatch_debug(ds, __FUNCTION__);
 #endif
 
-	_dispatch_retain(ds->do_targetq);
+	_dispatch_retain(as_do(ds->do_targetq));
 	return ds;
 	
 out_bad:
@@ -630,8 +629,8 @@ _dispatch_source_set_timer2(void *context)
 	ds->ds_ident_hack = params->ident;
 	ds->ds_timer = params->values;
 	_dispatch_timer_list_update(ds);
-	dispatch_resume(ds);
-	dispatch_release(ds);
+	dispatch_resume(as_do(ds));
+	dispatch_release(as_do(ds));
 	free(params);
 }
 
@@ -653,8 +652,8 @@ dispatch_source_set_timer(dispatch_source_t ds,
 
 	// Suspend the source so that it doesn't fire with pending changes
 	// The use of suspend/resume requires the external retain/release
-	dispatch_retain(ds);
-	dispatch_suspend(ds);
+	dispatch_retain(as_do(ds));
+	dispatch_suspend(as_do(ds));
 	
 	if (start == DISPATCH_TIME_NOW) {
 		start = _dispatch_absolute_time();

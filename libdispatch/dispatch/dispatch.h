@@ -30,7 +30,11 @@
 #endif
 #include <stddef.h>
 #include <stdint.h>
+#ifndef _MSC_VER
 #include <stdbool.h>
+#else
+#include "platform/windows/stdbool.h"
+#endif
 #include <stdarg.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>

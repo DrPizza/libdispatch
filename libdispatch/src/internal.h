@@ -27,38 +27,11 @@
 #ifndef __DISPATCH_INTERNAL__
 #define __DISPATCH_INTERNAL__
 
-#include "config/config.h"
+#include "platform/platform.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
-
-#if TARGET_OS_WIN32
-// Include Win32 headers early in order to minimize the
-// likelihood of name pollution from dispatch headers.
-
-#ifndef WINVER
-#define WINVER 0x502
-#endif
-
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x502
-#endif
-
-#ifndef _MSC_VER
-#define _MSC_VER 1400
-#pragma warning(disable:4159)
-#endif
-
-#define WIN32_LEAN_AND_MEAN 1
-#define _CRT_SECURE_NO_DEPRECATE 1
-#define _CRT_SECURE_NO_WARNINGS 1
-
-#define BOOL WINBOOL
-#include <Windows.h>
-#undef BOOL
-
-#endif /* TARGET_OS_WIN32 */
 
 #define __DISPATCH_BUILDING_DISPATCH__
 #define __DISPATCH_INDIRECT__
@@ -90,41 +63,11 @@
 #define DISPATCH_DEBUG 0
 #endif
 
-
-#if HAVE_LIBKERN_OSCROSSENDIAN_H
-#include <libkern/OSCrossEndian.h>
+#ifdef __GNUC__
+#define DISPATCH_NOINLINE	__attribute__((noinline))
+#else
+#define DISPATCH_NOINLINE	__declspec(noinline)
 #endif
-#if HAVE_LIBKERN_OSATOMIC_H
-#include <libkern/OSAtomic.h>
-#endif
-#if HAVE_MACH
-#include <mach/boolean.h>
-#include <mach/clock_types.h>
-#include <mach/clock.h>
-#include <mach/exception.h>
-#include <mach/mach.h>
-#include <mach/mach_error.h>
-#include <mach/mach_host.h>
-#include <mach/mach_interface.h>
-#include <mach/mach_time.h>
-#include <mach/mach_traps.h>
-#include <mach/message.h>
-#include <mach/mig_errors.h>
-#include <mach/host_info.h>
-#include <mach/notify.h>
-#endif /* HAVE_MACH */
-#if HAVE_MALLOC_MALLOC_H
-#include <malloc/malloc.h>
-#endif
-#include <sys/mount.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
-#if HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
 
 #ifdef __BLOCKS__
 #if TARGET_OS_WIN32
@@ -134,27 +77,11 @@
 #include <Block.h>
 #endif /* __BLOCKS__ */
 
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <search.h>
-#if USE_POSIX_SEM
-#include <semaphore.h>
-#endif
-#include <signal.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
+#ifdef _MSC_VER
+#define DISPATCH_NOINLINE __declspec(noinline)
+#else
 #define DISPATCH_NOINLINE	__attribute__((noinline))
+#endif
 
 // workaround 6368156
 #ifdef NSEC_PER_SEC
@@ -179,14 +106,22 @@
 #define slowpath(x) (x)
 #endif
 
+#if __GNUC__
 void _dispatch_bug(size_t line, long val) __attribute__((__noinline__));
 void _dispatch_abort(size_t line, long val) __attribute__((__noinline__,__noreturn__));
 void _dispatch_log(const char *msg, ...) __attribute__((__noinline__,__format__(printf,1,2)));
 void _dispatch_logv(const char *msg, va_list) __attribute__((__noinline__,__format__(printf,1,0)));
+#else
+__declspec(noinline) void _dispatch_bug(size_t line, long val);
+__declspec(noinline) __declspec(noreturn) void _dispatch_abort(size_t line, long val);
+__declspec(noinline) void _dispatch_log(/*_Printf_format_string_*/const char *msg, ...);
+__declspec(noinline) void _dispatch_logv(/*_Printf_format_string_*/const char *msg, va_list);
+#endif
 
 /*
  * For reporting bugs within libdispatch when using the "_debug" version of the library.
  */
+#ifdef __GNUC__
 #define dispatch_assert(e)	do {	\
 		if (__builtin_constant_p(e)) {	\
 			char __compile_time_assert__[(bool)(e) ? 1 : -1] __attribute__((unused));	\
@@ -208,13 +143,28 @@ void _dispatch_logv(const char *msg, va_list) __attribute__((__noinline__,__form
 			}	\
 		}	\
 	} while (0)
-
+#else
+#define dispatch_assert(e)	do {	\
+		uintptr_t _e = (uintptr_t)fastpath(e); /* always eval 'e' */	\
+		if (DISPATCH_DEBUG && !_e) {	\
+			_dispatch_abort(__LINE__, (long)_e);	\
+		}	\
+	} while (0)
+/* A lot of API return zero upon success and not-zero on fail. Let's capture and log the non-zero value */
+#define dispatch_assert_zero(e)	do {	\
+		uintptr_t _e = (uintptr_t)slowpath(e); /* always eval 'e' */	\
+		if (DISPATCH_DEBUG && _e) {	\
+			_dispatch_abort(__LINE__, (long)_e);	\
+		}	\
+	} while (0)
+#endif
 /*
  * For reporting bugs or impedance mismatches between libdispatch and external subsystems.
  * These do NOT abort(), and are always compiled into the product.
  *
  * In particular, we wrap all system-calls with assume() macros.
  */
+#ifdef __GNUC__
 #define dispatch_assume(e)	({	\
 		typeof(e) _e = fastpath(e); /* always eval 'e' */	\
 		if (!_e) {	\
@@ -238,10 +188,27 @@ void _dispatch_logv(const char *msg, va_list) __attribute__((__noinline__,__form
 		}	\
 		_e;	\
 	})
-
+#else
+#define dispatch_assume(e)	do{	\
+		uintptr_t _e = (uintptr_t)fastpath(e); /* always eval 'e' */	\
+		if (!_e) {	\
+			_dispatch_bug(__LINE__, (long)_e);	\
+		}	\
+		_e;	\
+	}while(0)
+/* A lot of API return zero upon success and not-zero on fail. Let's capture and log the non-zero value */
+#define dispatch_assume_zero(e)	do{	\
+		uintptr_t _e = (uintptr_t)slowpath(e); /* always eval 'e' */	\
+		if (_e) {	\
+			_dispatch_bug(__LINE__, (long)_e);	\
+		}	\
+		_e;	\
+	}while(0)
+#endif
 /*
  * For reporting bugs in clients when using the "_debug" version of the library.
  */
+#ifdef __GNUC__
 #define dispatch_debug_assert(e, msg, args...)	do {	\
 		if (__builtin_constant_p(e)) {	\
 			char __compile_time_assert__[(bool)(e) ? 1 : -1] __attribute__((unused));	\
@@ -253,6 +220,15 @@ void _dispatch_logv(const char *msg, va_list) __attribute__((__noinline__,__form
 			}	\
 		}	\
 	} while (0)
+#else
+#define dispatch_debug_assert(e, msg, ...)	do {	\
+		uintptr_t _e = (uintptr_t)fastpath(e); /* always eval 'e' */	\
+		if (DISPATCH_DEBUG && !_e) {	\
+			_dispatch_log("%s() 0x%lx: " msg, __func__, (long)_e, __VA_ARGS__);	\
+			abort();	\
+		}	\
+	} while (0)
+#endif
 
 #if __GNUC__
 #define DO_CAST(x) ((struct dispatch_object_s *)(x)._do)
@@ -271,6 +247,7 @@ long dummy_function_r0(void);
 
 
 /* Make sure the debug statments don't get too stale */
+#ifdef __GNUC__
 #define _dispatch_debug(x, args...)	\
 ({	\
 	if (DISPATCH_DEBUG) {	\
@@ -278,7 +255,15 @@ long dummy_function_r0(void);
 		    (void *)_dispatch_thread_self(), ##args);	\
 	}	\
 })
-
+#else
+#define _dispatch_debug(x, ...)	\
+do{	\
+	if (DISPATCH_DEBUG) {	\
+		_dispatch_log("libdispatch: %u\t%p\t" x, __LINE__,	\
+		    (void *)_dispatch_thread_self(), __VA_ARGS__);	\
+	}	\
+}while(0)
+#endif
 
 uint64_t _dispatch_get_nanoseconds(void);
 

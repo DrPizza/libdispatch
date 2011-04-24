@@ -18,7 +18,7 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
-#include "internal.h"
+#include "../internal.h"
 
 #if !HAVE_PTHREAD_KEY_INIT_NP
 pthread_key_t dispatch_queue_key;

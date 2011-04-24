@@ -42,7 +42,7 @@ _dispatch_benchmark_init(void *context)
 	register size_t cnt = bdata->count;
 	size_t i = 0;
 	uint64_t start, delta;
-#ifdef __LP64__
+#if defined(__LP64__) && !defined(_MSC_VER)
 	__uint128_t lcost;
 #else
 	long double lcost;
@@ -84,12 +84,14 @@ uint64_t
 dispatch_benchmark_f(size_t count, register void *ctxt, register void (*func)(void *))
 {
 	static struct __dispatch_benchmark_data_s bdata = {
-		.func = (dispatch_function_t)dummy_function,
-		.count = 10000000ul, // ten million
+		/*.loop_cost = */	0,
+		/*.func      = */	(dispatch_function_t)dummy_function,
+		/*.context   = */	0,
+		/*.count     = */	10000000ul, // ten million
 	};
 	static dispatch_once_t pred;
 	uint64_t ns, start, delta;
-#ifdef __LP64__
+#if defined(__LP64__) && !defined(_MSC_VER)
 	__uint128_t conversion, big_denom;
 #else
 	long double conversion, big_denom;
