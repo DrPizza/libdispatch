@@ -264,7 +264,7 @@ _dispatch_update_kq(const struct kevent *kev)
 				{
 					WINBOOL rval = PostQueuedCompletionStatus(_dispatch_get_kq(), 0, (ULONG_PTR)(kev), NULL);
 					if (rval == FALSE) { 
-						dispatch_assume_zero(errno);
+						dispatch_assume_zero(GetLastError());
 					}
 				}
 				break;
