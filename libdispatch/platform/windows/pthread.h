@@ -1,6 +1,11 @@
 #ifndef PTHREAD__H
 #define PTHREAD__H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 struct _pthread;
 typedef struct _pthread pthread;
 typedef pthread* pthread_t;
@@ -22,5 +27,9 @@ int pthread_detach(pthread_t thread);
 int pthread_join(pthread_t thread, void** thread_return);
 void pthread_exit(void *status);
 pthread_t pthread_self();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
