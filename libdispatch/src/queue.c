@@ -34,7 +34,6 @@ dummy_function_r0(void)
 	return 0;
 }
 
-
 static struct dispatch_semaphore_s _dispatch_thread_mediator[] = {
 	{
 		/*.do_vtable   = */	&_dispatch_semaphore_vtable,
@@ -74,7 +73,7 @@ static struct dispatch_semaphore_s _dispatch_thread_mediator[] = {
 	},
 };
 
-static INLINE dispatch_queue_t
+static DISPATCH_INLINE dispatch_queue_t
 _dispatch_get_root_queue(long priority, bool overcommit)
 {
 	if (overcommit) switch (priority) {
@@ -152,7 +151,7 @@ static int _dispatch_pthread_sigmask(int how, sigset_t *set, sigset_t *oset);
 #endif
 
 #define _dispatch_queue_trylock(dq) dispatch_atomic_cmpxchg(&(dq)->dq_running, 0, 1)
-static INLINE void _dispatch_queue_unlock(dispatch_queue_t dq);
+static DISPATCH_INLINE void _dispatch_queue_unlock(dispatch_queue_t dq);
 static void _dispatch_queue_invoke(dispatch_queue_t dq);
 static bool _dispatch_queue_wakeup_global(dispatch_queue_t dq);
 static struct dispatch_object_s *_dispatch_queue_concurrent_drain_one(dispatch_queue_t dq);
@@ -383,7 +382,7 @@ static void _dispatch_worker_thread2(void *context);
 
 malloc_zone_t *_dispatch_ccache_zone;
 
-static INLINE void
+static DISPATCH_INLINE void
 _dispatch_continuation_free(dispatch_continuation_t dc)
 {
 	dispatch_continuation_t prev_dc = _dispatch_thread_getspecific(dispatch_cache_key);
@@ -391,7 +390,7 @@ _dispatch_continuation_free(dispatch_continuation_t dc)
 	_dispatch_thread_setspecific(dispatch_cache_key, dc);
 }
 
-static INLINE void
+static DISPATCH_INLINE void
 _dispatch_continuation_pop(dispatch_object_t dou)
 {
 	dispatch_continuation_t dc = dou._dc;
@@ -594,7 +593,7 @@ static uintptr_t _dispatch_queue_serial_numbers = 10;
 
 // Note to later developers: ensure that any initialization changes are
 // made for statically allocated queues (i.e. _dispatch_main_q).
-INLINE void
+DISPATCH_INLINE void
 _dispatch_queue_init(dispatch_queue_t dq)
 {
 	dq->do_vtable = &_dispatch_queue_vtable;
@@ -966,7 +965,7 @@ dispatch_queue_get_label(dispatch_queue_t dq)
 
 #if DISPATCH_COCOA_COMPAT
 static void
-_dispatch_main_q_port_init(void *ctxt __attribute__((unused)))
+_dispatch_main_q_port_init(void *ctxt DISPATCH_UNUSED)
 {
 	kern_return_t kr;
 
@@ -1017,7 +1016,7 @@ dispatch_main(void)
 
 #if !TARGET_OS_WIN32
 static void
-_dispatch_sigsuspend(void *ctxt UNUSED)
+_dispatch_sigsuspend(void *ctxt DISPATCH_UNUSED)
 {
 	static const sigset_t mask = 0;
 
@@ -1190,7 +1189,7 @@ _dispatch_queue_unlock(dispatch_queue_t dq)
 }
 
 #if TARGET_OS_WIN32
-static void _dispatch_noop(void* unused)
+static void _dispatch_noop(void* unused DISPATCH_UNUSED)
 {
 }
 #endif
@@ -1274,7 +1273,7 @@ _dispatch_queue_wakeup_main(void)
 #endif
 
 #if HAVE_PTHREAD_WORKQUEUES
-static INLINE int
+static DISPATCH_INLINE int
 _dispatch_rootq2wq_pri(long idx)
 {
 #ifdef WORKQ_DEFAULT_PRIOQUEUE
@@ -1297,7 +1296,7 @@ _dispatch_rootq2wq_pri(long idx)
 #endif
 
 static void
-_dispatch_root_queues_init(void *context UNUSED)
+_dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 {
 #if HAVE_PTHREAD_WORKQUEUES
 	bool disable_wq = getenv("LIBDISPATCH_DISABLE_KWQ") != NULL;
@@ -1748,7 +1747,7 @@ dispatch_debug_queue(dispatch_queue_t dq, const char* str) {
 
 #if DISPATCH_COCOA_COMPAT
 void
-_dispatch_main_queue_callback_4CF(mach_msg_header_t *msg __attribute__((unused)))
+_dispatch_main_queue_callback_4CF(mach_msg_header_t *msg DISPATCH_UNUSED)
 {
 	if (main_q_is_draining) {
 		return;
@@ -1857,7 +1856,7 @@ dispatch_queue_attr_set_finalizer(dispatch_queue_attr_t attr,
 #endif /* DISPATCH_NO_LEGACY */
 
 static void
-_dispatch_ccache_init(void *context UNUSED)
+_dispatch_ccache_init(void *context DISPATCH_UNUSED)
 {
 	_dispatch_ccache_zone = malloc_create_zone(0, 0);
 	dispatch_assert(_dispatch_ccache_zone);
@@ -1907,7 +1906,7 @@ static char _dispatch_build[16];
  * XXXRW: What to do here for !Mac OS X?
  */
 static void
-_dispatch_bug_init(void *context UNUSED)
+_dispatch_bug_init(void *context DISPATCH_UNUSED)
 {
 #ifdef __APPLE__
 	int mib[] = { CTL_KERN, KERN_OSVERSION };
@@ -2061,7 +2060,7 @@ dispatch_atfork_child(void)
 }
 
 void
-dispatch_init_pthread(pthread_t pthr UNUSED)
+dispatch_init_pthread(pthread_t pthr DISPATCH_UNUSED)
 {
 }
 
@@ -2159,3 +2158,4 @@ dispatch_after_f(dispatch_time_t when, dispatch_queue_t queue, void *ctxt, void 
 	dispatch_source_set_timer(ds, when, 0, 0);
 	dispatch_resume(as_do(ds));
 }
+

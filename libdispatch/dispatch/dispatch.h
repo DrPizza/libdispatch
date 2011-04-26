@@ -25,20 +25,22 @@
 #include <Availability.h>
 #include <TargetConditionals.h>
 #endif
-#if HAVE_SYS_CDEFS_H
-#include <sys/cdefs.h>
-#endif
-#include <stddef.h>
-#include <stdint.h>
+
 #ifndef _MSC_VER
 #include <stdbool.h>
 #else
 #include "platform/windows/stdbool.h"
 #endif
 #include <stdarg.h>
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+
+//#if HAVE_UNISTD_H
+//#include <unistd.h>
+//#endif
+//#if HAVE_SYS_CDEFS_H
+//#include <sys/cdefs.h>
+//#endif
+//#include <stddef.h>
+//#include <stdint.h>
 
 #if defined(__cplusplus)
 #define __DISPATCH_BEGIN_DECLS	extern "C" {

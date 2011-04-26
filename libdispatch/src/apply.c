@@ -27,7 +27,7 @@
 // NOTE: 'char' arrays cause GCC to insert buffer overflow detection logic 
 struct dispatch_apply_s {
 	long	_da_pad0[DISPATCH_CACHELINE_SIZE / sizeof(long)];
-	void	(*da_func)(void *, size_t);
+	dispatch_function_apply_t da_func;
 	void	*da_ctxt;
 	size_t	da_iterations;
 	size_t	da_index;
@@ -41,7 +41,7 @@ _dispatch_apply2(void *_ctxt)
 {
 	struct dispatch_apply_s *da = _ctxt;
 	size_t const iter = da->da_iterations;
-	void (*func)(void*, size_t) = da->da_func;
+	dispatch_function_apply_t func = da->da_func;
 	void *const ctxt = da->da_ctxt;
 	size_t idx;
 
@@ -86,7 +86,7 @@ dispatch_apply(size_t iterations, dispatch_queue_t dq, void (^work)(size_t))
 
 DISPATCH_NOINLINE
 void
-dispatch_apply_f(size_t iterations, dispatch_queue_t dq, void *ctxt, void (*func)(void *, size_t))
+dispatch_apply_f(size_t iterations, dispatch_queue_t dq, void *ctxt, dispatch_function_apply_t func)
 {
 	struct dispatch_apply_dc_s {
 		DISPATCH_CONTINUATION_HEADER(dispatch_apply_dc_s);
@@ -155,7 +155,7 @@ dispatch_stride(size_t offset, size_t stride, size_t iterations, dispatch_queue_
 DISPATCH_NOINLINE
 void
 dispatch_stride_f(size_t offset, size_t stride, size_t iterations,
-		dispatch_queue_t dq, void *ctxt, void (*func)(void *, size_t))
+		dispatch_queue_t dq, void *ctxt, dispatch_function_apply_t func)
 {
 	if (stride == 0) {
 		stride = 1;

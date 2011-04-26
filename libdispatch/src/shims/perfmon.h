@@ -42,13 +42,13 @@
 		(*(void **)(dispatch_bcounter_key * sizeof(void *) + _PTHREAD_TSD_OFFSET)) :: "cc")
 #endif
 #else /* !USE_APPLE_TSD_OPTIMIZATIONS */
-static inline void
+static DISPATCH_INLINE void
 _dispatch_workitem_inc(void)
 {
 	unsigned long cnt = (unsigned long)_dispatch_thread_getspecific(dispatch_bcounter_key);
 	_dispatch_thread_setspecific(dispatch_bcounter_key, (void *)++cnt);
 }
-static inline void
+static DISPATCH_INLINE void
 _dispatch_workitem_dec(void)
 {
 	unsigned long cnt = (unsigned long)_dispatch_thread_getspecific(dispatch_bcounter_key);
@@ -60,7 +60,7 @@ _dispatch_workitem_dec(void)
 #ifdef __LP64__
 #define flsll(x) flsl(x)
 #else
-static inline unsigned int
+static DISPATCH_INLINE unsigned int
 flsll(uint64_t val)
 {
 	union {

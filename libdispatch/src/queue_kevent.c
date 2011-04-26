@@ -38,7 +38,7 @@ typedef int _queue_type;
 static _queue_type _dispatch_kq;
 
 static void
-_dispatch_get_kq_init(void *context UNUSED)
+_dispatch_get_kq_init(void *context DISPATCH_UNUSED)
 {
 #if TARGET_OS_WIN32
 	_dispatch_kq = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);

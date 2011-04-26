@@ -33,16 +33,6 @@
 
 uint64_t _dispatch_get_nanoseconds(void);
 
-#if TARGET_OS_WIN32
-
-#ifdef _MSC_VER
-#define INLINE __forceinline
-#else
-#define INLINE inline
-#endif
-
-#endif
-
 #if (defined(__i386__) || defined(__x86_64__)) && HAVE_MACH_ABSOLUTE_TIME
 // x86 currently implements mach time in nanoseconds; this is NOT likely to change
 #define _dispatch_time_mach2nano(x) (x)
@@ -56,7 +46,7 @@ typedef struct _dispatch_host_time_data_s {
 __private_extern__ _dispatch_host_time_data_s _dispatch_host_time_data;
 __private_extern__ void _dispatch_get_host_time_init(void *context);
 
-static INLINE uint64_t
+static DISPATCH_INLINE uint64_t
 _dispatch_time_mach2nano(uint64_t machtime)
 {
 	_dispatch_host_time_data_s *const data = &_dispatch_host_time_data;
@@ -65,7 +55,7 @@ _dispatch_time_mach2nano(uint64_t machtime)
 	return (uint64_t)(machtime * data->frac);
 }
 
-static INLINE int64_t
+static DISPATCH_INLINE int64_t
 _dispatch_time_nano2mach(int64_t nsec)
 {
 	_dispatch_host_time_data_s *const data = &_dispatch_host_time_data;
@@ -90,7 +80,7 @@ _dispatch_time_nano2mach(int64_t nsec)
 }
 #endif
 
-static INLINE uint64_t
+static DISPATCH_INLINE uint64_t
 _dispatch_absolute_time(void)
 {
 #if HAVE_MACH_ABSOLUTE_TIME

@@ -33,8 +33,7 @@
 #endif
 
 __DISPATCH_BEGIN_DECLS
-
-
+	
 /*!
  * @enum dispatch_queue_flags_t
  *
@@ -98,8 +97,6 @@ DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_NOTHROW
 void
 dispatch_queue_set_width(dispatch_queue_t dq, long width);
 
-
-
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 extern const struct dispatch_queue_offsets_s {
 	// always add new fields at the end
@@ -115,7 +112,6 @@ extern const struct dispatch_queue_offsets_s {
 	const uint16_t dqo_running;
 	const uint16_t dqo_running_size;
 } dispatch_queue_offsets;
-
 
 __DISPATCH_END_DECLS
 

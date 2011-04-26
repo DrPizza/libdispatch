@@ -76,10 +76,17 @@
 #endif
 #define NT_SLIST_ENTRY SINGLE_LIST_ENTRY
 
+#ifdef __BLOCKS__
+#define BLOCK_EXPORT extern "C" __declspec(dllexport)
+#include <Block_private.h>
+#include <Block.h>
+#endif /* __BLOCKS__ */
+
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "semaphore.h"
 #include "signal.h"
@@ -88,6 +95,10 @@
 #include "sys/mount.h"
 #include "sys/queue.h"
 #include "sys/time.h"
+#include "sys/event.h"
+
+#include "pthread.h"
+#include "pthread_workqueue.h"
 
 #pragma warning(disable : 4098) // warning C4098: 'identifier': 'void' function returning a value
 #pragma warning(disable : 4100) // warning C4100: 'identifier': unreferenced formal parameter
@@ -103,6 +114,7 @@
 #define __i386__
 #elif defined(_M_X64)
 #define __x86_64__
+// TODO Win64 is not an LP64 platform. We should have a different symbol, to explicitly denote 64-bit pointers.
 #define __LP64__
 #else
 #error Unsupported architecture

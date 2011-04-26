@@ -27,32 +27,6 @@
 #ifndef __DISPATCH_PRIVATE__
 #define __DISPATCH_PRIVATE__
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-#endif
-
-#if HAVE_MACH
-#include <mach/boolean.h>
-#include <mach/mach.h>
-#include <mach/message.h>
-#endif
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#if HAVE_SYS_CDEFS_H
-#include <sys/cdefs.h>
-#endif
-#ifndef WIN32
-#include <pthread.h>
-#else
-#include "platform/windows/pthread.h"
-#endif
-
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-/* iPhone OS does not make any legacy definitions visible */
-#define DISPATCH_NO_LEGACY
-#endif
-
 #ifndef __DISPATCH_BUILDING_DISPATCH__
 #include_next <dispatch/dispatch.h>
 

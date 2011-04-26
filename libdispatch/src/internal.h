@@ -64,23 +64,21 @@
 #endif
 
 #ifdef __GNUC__
-#define DISPATCH_NOINLINE	__attribute__((noinline))
-#else
-#define DISPATCH_NOINLINE	__declspec(noinline)
+#define DISPATCH_NOINLINE __attribute__((noinline))
+#elif _MSC_VER
+#define DISPATCH_NOINLINE __declspec(noinline)
 #endif
 
-#ifdef __BLOCKS__
-#if TARGET_OS_WIN32
-#define BLOCK_EXPORT extern "C" __declspec(dllexport)
-#endif /* TARGET_OS_WIN32 */
-#include <Block_private.h>
-#include <Block.h>
-#endif /* __BLOCKS__ */
+#ifdef __GNUC__
+#define DISPATCH_INLINE __attribute__((always_inline)) inline
+#elif _MSC_VER
+#define DISPATCH_INLINE __forceinline
+#endif
 
-#ifdef _MSC_VER
-#define DISPATCH_NOINLINE __declspec(noinline)
+#ifdef __GNUC__
+#define DISPATCH_UNUSED __attribute__((unused))
 #else
-#define DISPATCH_NOINLINE	__attribute__((noinline))
+#define DISPATCH_UNUSED
 #endif
 
 // workaround 6368156
@@ -112,10 +110,10 @@ void _dispatch_abort(size_t line, long val) __attribute__((__noinline__,__noretu
 void _dispatch_log(const char *msg, ...) __attribute__((__noinline__,__format__(printf,1,2)));
 void _dispatch_logv(const char *msg, va_list) __attribute__((__noinline__,__format__(printf,1,0)));
 #else
-__declspec(noinline) void _dispatch_bug(size_t line, long val);
-__declspec(noinline) __declspec(noreturn) void _dispatch_abort(size_t line, long val);
-__declspec(noinline) void _dispatch_log(/*_Printf_format_string_*/const char *msg, ...);
-__declspec(noinline) void _dispatch_logv(/*_Printf_format_string_*/const char *msg, va_list);
+DISPATCH_NOINLINE void _dispatch_bug(size_t line, long val);
+DISPATCH_NOINLINE __declspec(noreturn) void _dispatch_abort(size_t line, long val);
+DISPATCH_NOINLINE void _dispatch_log(/*_Printf_format_string_*/const char *msg, ...);
+DISPATCH_NOINLINE void _dispatch_logv(/*_Printf_format_string_*/const char *msg, va_list);
 #endif
 
 /*
@@ -244,7 +242,6 @@ void _dispatch_call_block_and_release2(void *block, void *ctxt);
 
 void dummy_function(void);
 long dummy_function_r0(void);
-
 
 /* Make sure the debug statments don't get too stale */
 #ifdef __GNUC__

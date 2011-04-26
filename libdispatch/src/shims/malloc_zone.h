@@ -32,63 +32,57 @@
 #if !HAVE_MALLOC_CREATE_ZONE
 typedef void * malloc_zone_t;
 
-#ifdef _MSC_VER
-#define INLINE __forceinline
-#else
-#define INLINE inline
-#endif
-
-static INLINE malloc_zone_t *
+static DISPATCH_INLINE malloc_zone_t *
 malloc_create_zone(size_t start_size, unsigned flags)
 {
 	return ((malloc_zone_t *)((intptr_t)-1));
 }
 
-static INLINE void
+static DISPATCH_INLINE void
 malloc_destroy_zone(malloc_zone_t *zone)
 {
 	/* No-op. */
 }
 
-static INLINE malloc_zone_t *
+static DISPATCH_INLINE malloc_zone_t *
 malloc_default_zone(void)
 {
 	return ((malloc_zone_t *)((intptr_t)-1));
 }
 
-static INLINE malloc_zone_t *
+static DISPATCH_INLINE malloc_zone_t *
 malloc_zone_from_ptr(const void *ptr)
 {
 	return ((malloc_zone_t *)((intptr_t)-1));
 }
 
-static INLINE void *
+static DISPATCH_INLINE void *
 malloc_zone_malloc(malloc_zone_t *zone, size_t size)
 {
 	return (malloc(size));
 }
 
-static INLINE void *
+static DISPATCH_INLINE void *
 malloc_zone_calloc(malloc_zone_t *zone, size_t num_items, size_t size)
 {
 	return (calloc(num_items, size));
 }
 
 #if !TARGET_OS_WIN32
-static INLINE void *
+static DISPATCH_INLINE void *
 malloc_zone_realloc(malloc_zone_t *zone, void *ptr, size_t size)
 {
 	return (realloc(ptr, size));
 }
 #endif
 
-static INLINE void
+static DISPATCH_INLINE void
 malloc_zone_free(malloc_zone_t *zone, void *ptr)
 {
 	free(ptr);
 }
 
-static INLINE void
+static DISPATCH_INLINE void
 malloc_set_zone_name(malloc_zone_t *zone, const char *name)
 {
 	/* No-op. */

@@ -27,25 +27,6 @@
 #ifndef __DISPATCH_OS_SHIMS__
 #define __DISPATCH_OS_SHIMS__
 
-#ifndef WIN32
-#include <pthread.h>
-#else
-#include "platform/windows/pthread.h"
-#endif
-#if HAVE_PTHREAD_MACHDEP_H
-#include <pthread_machdep.h>
-#endif
-#if HAVE_PTHREAD_WORKQUEUES
-#ifndef WIN32
-#include <pthread_workqueue.h>
-#else
-#include "platform/windows/pthread_workqueue.h"
-#endif
-#endif
-#if HAVE_PTHREAD_NP_H
-#include <pthread_np.h>
-#endif
-
 #if USE_APPLE_CRASHREPORTER_INFO
 __private_extern__ const char *__crashreporter_info__;
 #endif
@@ -55,24 +36,7 @@ __private_extern__ const char *__crashreporter_info__;
 #endif
 
 #if TARGET_OS_WIN32
-#define bzero(ptr,len) memset((ptr), 0, (len))
 #define snprintf _snprintf
-
-#ifdef _MSC_VER
-#define INLINE __forceinline
-#else
-#define INLINE inline
-#endif
-
-INLINE size_t strlcpy(char *dst, const char *src, size_t size) {
-       size_t res = strlen(dst) + strlen(src) + 1;
-       if (size > 0) {
-               size_t n = size - 1;
-               strncpy(dst, src, n);
-               dst[n] = 0;
-       }
-       return res;
-}
 #endif
 
 #include "shims/getprogname.h"

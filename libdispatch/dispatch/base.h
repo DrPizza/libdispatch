@@ -25,6 +25,12 @@
 #error "Please #include <dispatch/dispatch.h> instead of this file directly."
 #endif
 
+#ifdef __GNUC__
+#define DISPATCH_INLINE __attribute__((always_inline)) inline
+#elif _MSC_VER
+#define DISPATCH_INLINE __forceinline
+#endif
+
 #ifdef __cplusplus
 /*
  * Dispatch objects are NOT C++ objects. Nevertheless, we can at least keep C++
@@ -50,7 +56,7 @@ typedef union {
 	struct dispatch_semaphore_s *_dsema;
 } dispatch_object_t __attribute__((transparent_union));
 
-static __forceinline dispatch_object_t as_do(dispatch_object_t do_)
+static DISPATCH_INLINE dispatch_object_t as_do(dispatch_object_t do_)
 {
 	return do_;
 }
@@ -66,7 +72,7 @@ typedef union {
 	struct dispatch_semaphore_s *_dsema;
 } dispatch_object_t;
 
-static __forceinline dispatch_object_t as_do(void* v)
+static DISPATCH_INLINE dispatch_object_t as_do(void* v)
 {
 	dispatch_object_t do_ = { v };
 	return do_;

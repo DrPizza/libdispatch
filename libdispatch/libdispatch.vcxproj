@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -185,6 +185,7 @@
     <ClInclude Include="dispatch\semaphore.h" />
     <ClInclude Include="dispatch\source.h" />
     <ClInclude Include="dispatch\time.h" />
+    <ClInclude Include="platform\darwin\platform.h" />
     <ClInclude Include="platform\windows\netinet\in.h" />
     <ClInclude Include="platform\platform.h" />
     <ClInclude Include="platform\unix\platform.h" />

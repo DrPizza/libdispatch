@@ -99,11 +99,7 @@ void _dispatch_queue_push_list_slow(dispatch_queue_t dq, struct dispatch_object_
 void _dispatch_queue_serial_drain_till_empty(dispatch_queue_t dq);
 void _dispatch_force_cache_cleanup(void);
 
-#ifdef __GNUC__
-__attribute__((always_inline)) inline
-#else
-__forceinline
-#endif
+DISPATCH_INLINE
 static void
 _dispatch_queue_push_list(dispatch_queue_t dq, dispatch_object_t _head, dispatch_object_t _tail)
 {
@@ -124,22 +120,16 @@ _dispatch_queue_push_list(dispatch_queue_t dq, dispatch_object_t _head, dispatch
 
 #define DISPATCH_QUEUE_PRIORITY_COUNT 3
 
-#ifdef __GNUC__
-#define UNUSED 	__attribute__((unused))
-#else
-#define UNUSED
-#endif
-
 #if DISPATCH_DEBUG
 void dispatch_debug_queue(dispatch_queue_t dq, const char* str);
 #else
-static INLINE void dispatch_debug_queue(dispatch_queue_t dq UNUSED, const char* str UNUSED) {}
+static DISPATCH_INLINE void dispatch_debug_queue(dispatch_queue_t dq DISPATCH_UNUSED, const char* str DISPATCH_UNUSED) {}
 #endif
 
 size_t dispatch_queue_debug(dispatch_queue_t dq, char* buf, size_t bufsiz);
 size_t dispatch_queue_debug_attr(dispatch_queue_t dq, char* buf, size_t bufsiz);
 
-static INLINE dispatch_queue_t
+static DISPATCH_INLINE dispatch_queue_t
 _dispatch_queue_get_current(void)
 {
 	return _dispatch_thread_getspecific(dispatch_queue_key);
@@ -148,7 +138,7 @@ _dispatch_queue_get_current(void)
 __private_extern__ malloc_zone_t *_dispatch_ccache_zone;
 dispatch_continuation_t _dispatch_continuation_alloc_from_heap(void);
 
-static INLINE dispatch_continuation_t
+static DISPATCH_INLINE dispatch_continuation_t
 _dispatch_continuation_alloc_cacheonly(void)
 {
 	dispatch_continuation_t dc = fastpath(_dispatch_thread_getspecific(dispatch_cache_key));

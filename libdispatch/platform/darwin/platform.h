@@ -3,6 +3,9 @@
 
 #include "config/config.h"
 
+#include <Availability.h>
+#include <TargetConditionals.h>
+
 #if HAVE_LIBKERN_OSCROSSENDIAN_H
 #include <libkern/OSCrossEndian.h>
 #endif
@@ -61,6 +64,28 @@
 #include <syslog.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+#include <sys/event.h>
+
+#include <pthread.h>
+#if HAVE_PTHREAD_MACHDEP_H
+#include <pthread_machdep.h>
+#endif
+#if HAVE_PTHREAD_WORKQUEUES
+#include <pthread_workqueue.h>
+#endif
+#if HAVE_PTHREAD_NP_H
+#include <pthread_np.h>
+#endif
+
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+/* iPhone OS does not make any legacy definitions visible */
+#ifndef DISPATCH_NO_LEGACY
+#define DISPATCH_NO_LEGACY
+#endif
 #endif
 
 #endif

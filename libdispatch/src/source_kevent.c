@@ -94,7 +94,7 @@ static void _dispatch_drain_mach_messages(struct kevent *ke);
 static void
 #endif
 #if HAVE_MACH
-_dispatch_mach_notify_source_init(void *context __attribute__((unused)));
+_dispatch_mach_notify_source_init(void *context DISPATCH_UNUSED);
 #endif
 
 static const char *
@@ -134,7 +134,7 @@ _evfiltstr(short filt)
 
 static TAILQ_HEAD(, dispatch_kevent_s) _dispatch_sources[DSL_HASH_SIZE];
 
-static INLINE uintptr_t
+static DISPATCH_INLINE uintptr_t
 _dispatch_kevent_hash(uintptr_t ident, short filter)
 {
 	uintptr_t value;
@@ -191,7 +191,7 @@ _dispatch_source_kevent_debug(dispatch_source_t ds, char* buf, size_t bufsiz)
 }
 
 static void
-_dispatch_source_init_tail_queue_array(void *context UNUSED)
+_dispatch_source_init_tail_queue_array(void *context DISPATCH_UNUSED)
 {
 	unsigned int i;
 	for (i = 0; i < DSL_HASH_SIZE; i++) {
@@ -285,7 +285,7 @@ _dispatch_source_kevent_resume(dispatch_source_t ds, uint32_t new_flags, uint32_
 
 #ifndef DISPATCH_NO_LEGACY
 static void
-_dispatch_kevent_debugger2(void *context, dispatch_source_t unused __attribute__((unused)))
+_dispatch_kevent_debugger2(void *context, dispatch_source_t DISPATCH_UNUSED)
 {
 	struct sockaddr sa;
 	socklen_t sa_len = sizeof(sa);
@@ -350,7 +350,7 @@ _dispatch_kevent_debugger2(void *context, dispatch_source_t unused __attribute__
 }
 
 static void
-_dispatch_kevent_debugger(void *context __attribute__((unused)))
+_dispatch_kevent_debugger(void *context DISPATCH_UNUSED)
 {
 	union {
 		struct sockaddr_in sa_in;
@@ -1032,7 +1032,7 @@ _dispatch_drain_mach_messages(struct kevent *ke)
 }
 
 void
-_dispatch_port_set_init(void *context __attribute__((unused)))
+_dispatch_port_set_init(void *context DISPATCH_UNUSED)
 {
 	struct kevent kev = {
 		.filter = EVFILT_MACHPORT,
@@ -1206,7 +1206,7 @@ _dispatch_mach_notify_source2(void *context)
 }
 
 static void
-_dispatch_mach_notify_source_init(void *context __attribute__((unused)))
+_dispatch_mach_notify_source_init(void *context DISPATCH_UNUSED)
 {
 	_dispatch_get_port_set();
 
@@ -1218,7 +1218,7 @@ _dispatch_mach_notify_source_init(void *context __attribute__((unused)))
 }
 
 kern_return_t
-_dispatch_mach_notify_port_deleted(mach_port_t notify __attribute__((unused)), mach_port_name_t name)
+_dispatch_mach_notify_port_deleted(mach_port_t notify DISPATCH_UNUSED, mach_port_name_t name)
 {
 	dispatch_source_t dsi;
 	dispatch_kevent_t dk;
@@ -1251,7 +1251,7 @@ out:
 }
 
 kern_return_t
-_dispatch_mach_notify_port_destroyed(mach_port_t notify __attribute__((unused)), mach_port_t name)
+_dispatch_mach_notify_port_destroyed(mach_port_t notify DISPATCH_UNUSED, mach_port_t name)
 {
 	kern_return_t kr;
 	// this function should never be called
@@ -1263,7 +1263,7 @@ _dispatch_mach_notify_port_destroyed(mach_port_t notify __attribute__((unused)),
 }
 
 kern_return_t
-_dispatch_mach_notify_no_senders(mach_port_t notify, mach_port_mscount_t mscnt __attribute__((unused)))
+_dispatch_mach_notify_no_senders(mach_port_t notify, mach_port_mscount_t mscnt DISPATCH_UNUSED)
 {
 	// this function should never be called
 	(void)dispatch_assume_zero(notify);
@@ -1271,7 +1271,7 @@ _dispatch_mach_notify_no_senders(mach_port_t notify, mach_port_mscount_t mscnt _
 }
 
 kern_return_t
-_dispatch_mach_notify_send_once(mach_port_t notify __attribute__((unused)))
+_dispatch_mach_notify_send_once(mach_port_t notify DISPATCH_UNUSED)
 {
 	// we only register for dead-name notifications
 	// some code deallocated our send-once right without consuming it
@@ -1282,7 +1282,7 @@ _dispatch_mach_notify_send_once(mach_port_t notify __attribute__((unused)))
 }
 
 kern_return_t
-_dispatch_mach_notify_dead_name(mach_port_t notify __attribute__((unused)), mach_port_name_t name)
+_dispatch_mach_notify_dead_name(mach_port_t notify DISPATCH_UNUSED, mach_port_name_t name)
 {
 	dispatch_source_t dsi;
 	dispatch_kevent_t dk;
@@ -1317,14 +1317,14 @@ out:
 }
 
 kern_return_t
-_dispatch_wakeup_main_thread(mach_port_t mp __attribute__((unused)))
+_dispatch_wakeup_main_thread(mach_port_t mp DISPATCH_UNUSED)
 {
 	// dummy function just to pop out the main thread out of mach_msg()
 	return 0;
 }
 
 kern_return_t
-_dispatch_consume_send_once_right(mach_port_t mp __attribute__((unused)))
+_dispatch_consume_send_once_right(mach_port_t mp DISPATCH_UNUSED)
 {
 	// dummy function to consume a send-once right
 	return 0;

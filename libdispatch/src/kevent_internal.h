@@ -28,11 +28,6 @@
 #define __DISPATCH_KEVENT_INTERNAL__
 
 #include "internal.h"
-#if !TARGET_OS_WIN32
-#include <sys/event.h>
-#else
-#include "platform/windows/sys/event.h"
-#endif
 
 struct dispatch_kevent_s {
 	TAILQ_ENTRY(dispatch_kevent_s) dk_list;
@@ -50,6 +45,5 @@ void dispatch_debug_kevents(struct kevent* kev, size_t count, const char* str);
 
 void _dispatch_source_drain_kevent(struct kevent *);
 void _dispatch_update_kq(const struct kevent *);
-
 
 #endif /* __DISPATCH_KEVENT_INTERNAL__ */
