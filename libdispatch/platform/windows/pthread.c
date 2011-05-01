@@ -33,6 +33,11 @@ typedef struct _pthread pthread;
 
 typedef pthread* pthread_t;
 
+void* _pthread_get_native_handle(pthread_t pt)
+{
+	return pt->thread;
+}
+
 void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 {
 	UNREFERENCED_PARAMETER(dll);

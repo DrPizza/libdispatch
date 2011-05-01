@@ -331,25 +331,6 @@ dispatch_queue_t
 dispatch_get_current_queue(void);
 
 /*!
- * @function dispatch_get_main_queue
- *
- * @abstract
- * Returns the default queue that is bound to the main thread.
- *
- * @discussion
- * In order to invoke blocks submitted to the main queue, the application must
- * call dispatch_main(), NSApplicationMain(), or use a CFRunLoop on the main
- * thread.
- *
- * @result
- * Returns the main queue. This queue is created automatically on behalf of
- * the main thread before main() is called.
- */
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT struct dispatch_queue_s _dispatch_main_q;
-#define dispatch_get_main_queue() (&_dispatch_main_q)
-
-/*!
  * @enum dispatch_queue_priority_t
  *
  * @constant DISPATCH_QUEUE_PRIORITY_HIGH
@@ -562,6 +543,16 @@ dispatch_after_f(dispatch_time_t when,
 	dispatch_queue_t queue,
 	void *context,
 	dispatch_function_t work);
+
+/*!
+ * @function dispatch_get_thread_queue
+ *
+ * @abstract Get the per-thread queue belonging to the current thread.
+ *
+ */
+DISPATCH_EXPORT DISPATCH_PURE DISPATCH_WARN_RESULT DISPATCH_NOTHROW
+dispatch_queue_t
+dispatch_get_current_thread_queue();
 
 __DISPATCH_END_DECLS
 

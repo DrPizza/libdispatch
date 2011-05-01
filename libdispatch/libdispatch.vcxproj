@@ -200,6 +200,8 @@
     <ClInclude Include="platform\windows\pthread.h" />
     <ClInclude Include="src\hw_shims.h" />
     <ClInclude Include="src\internal.h" />
+    <ClInclude Include="dispatch\interop.h" />
+    <ClInclude Include="src\interop_internal.h" />
     <ClInclude Include="src\kevent_internal.h" />
     <ClInclude Include="src\legacy.h" />
     <ClInclude Include="src\object_internal.h" />
@@ -232,6 +234,7 @@
     <ClCompile Include="platform\windows\unistd.c" />
     <ClCompile Include="src\apply.c" />
     <ClCompile Include="src\benchmark.c" />
+    <ClCompile Include="src\interop.c" />
     <ClCompile Include="src\legacy.c" />
     <ClCompile Include="src\object.c" />
     <ClCompile Include="src\once.c" />

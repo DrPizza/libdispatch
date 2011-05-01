@@ -65,9 +65,6 @@
     <ClInclude Include="src\kevent_internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\internal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\hw_shims.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -161,6 +158,15 @@
     <ClInclude Include="platform\darwin\platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dispatch\interop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\interop_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\shims\tsd.c">
@@ -224,6 +230,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="platform\windows\semaphore.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interop.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

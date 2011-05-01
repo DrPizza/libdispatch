@@ -55,7 +55,6 @@ struct dispatch_continuation_s {
 
 typedef struct dispatch_continuation_s *dispatch_continuation_t;
 
-
 struct dispatch_queue_vtable_s {
 	DISPATCH_VTABLE_HEADER(dispatch_queue_s);
 };
@@ -78,7 +77,9 @@ struct dispatch_queue_vtable_s {
 	struct dispatch_object_s *dq_items_tail; \
 	struct dispatch_object_s *volatile dq_items_head; \
 	uintptr_t dq_serialnum; \
-	void *dq_finalizer_ctxt
+	void *dq_finalizer_ctxt; \
+	void* dq_manually_drained; \
+	bool dq_is_manually_draining
 #endif
 
 struct dispatch_queue_s {

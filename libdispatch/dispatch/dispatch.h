@@ -33,15 +33,6 @@
 #endif
 #include <stdarg.h>
 
-//#if HAVE_UNISTD_H
-//#include <unistd.h>
-//#endif
-//#if HAVE_SYS_CDEFS_H
-//#include <sys/cdefs.h>
-//#endif
-//#include <stddef.h>
-//#include <stdint.h>
-
 #if defined(__cplusplus)
 #define __DISPATCH_BEGIN_DECLS	extern "C" {
 #define __DISPATCH_END_DECLS	}
@@ -70,6 +61,7 @@
 #include <dispatch/group.h>
 #include <dispatch/semaphore.h>
 #include <dispatch/once.h>
+#include <dispatch/interop.h>
 
 #undef __DISPATCH_INDIRECT__
 

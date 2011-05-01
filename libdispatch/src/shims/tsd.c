@@ -25,4 +25,5 @@ pthread_key_t dispatch_queue_key;
 pthread_key_t dispatch_sema4_key;
 pthread_key_t dispatch_cache_key;
 pthread_key_t dispatch_bcounter_key;
+pthread_key_t dispatch_threaded_queue_key;
 #endif

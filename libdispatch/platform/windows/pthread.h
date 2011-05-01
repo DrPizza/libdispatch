@@ -28,6 +28,8 @@ int pthread_join(pthread_t thread, void** thread_return);
 void pthread_exit(void *status);
 pthread_t pthread_self();
 
+void* _pthread_get_native_handle(pthread_t);
+
 #ifdef __cplusplus
 }
 #endif

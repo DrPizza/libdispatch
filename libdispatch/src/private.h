@@ -64,39 +64,6 @@ libdispatch_init(void) __attribute__ ((constructor));
 libdispatch_init(void);
 #endif
 
-#if HAVE_MACH
-#define DISPATCH_COCOA_COMPAT 1
-#if DISPATCH_COCOA_COMPAT
-
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT DISPATCH_NOTHROW
-mach_port_t
-_dispatch_get_main_queue_port_4CF(void);
-
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT DISPATCH_NOTHROW
-void
-_dispatch_main_queue_callback_4CF(mach_msg_header_t *msg);
-
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT
-void (*dispatch_begin_thread_4GC)(void);
-
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT
-void (*dispatch_end_thread_4GC)(void);
-
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT
-void *(*_dispatch_begin_NSAutoReleasePool)(void);
-
-__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
-DISPATCH_EXPORT
-void (*_dispatch_end_NSAutoReleasePool)(void *);
-
-#endif
-#endif /* HAVE_MACH */
-
 /* pthreads magic */
 
 #if !TARGET_OS_WIN32

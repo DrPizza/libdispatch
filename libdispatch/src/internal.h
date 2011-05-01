@@ -45,6 +45,7 @@
 #include "dispatch/group.h"
 #include "dispatch/semaphore.h"
 #include "dispatch/once.h"
+#include "dispatch/interop.h"
 #include "dispatch/benchmark.h"
 
 /* private.h uses #include_next and must be included last to avoid picking
@@ -301,6 +302,7 @@ __private_extern__ struct _dispatch_hw_config_s {
 #include "queue_internal.h"
 #include "semaphore_internal.h"
 #include "source_internal.h"
+#include "interop_internal.h"
 
 #if USE_APPLE_CRASHREPORTER_INFO
 

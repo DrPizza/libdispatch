@@ -39,6 +39,7 @@ extern pthread_key_t dispatch_queue_key;
 extern pthread_key_t dispatch_sema4_key;
 extern pthread_key_t dispatch_cache_key;
 extern pthread_key_t dispatch_bcounter_key;
+extern pthread_key_t dispatch_threaded_queue_key;
 #endif
 
 #if USE_APPLE_TSD_OPTIMIZATIONS

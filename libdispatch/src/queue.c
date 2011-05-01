@@ -151,24 +151,13 @@ static int _dispatch_pthread_sigmask(int how, sigset_t *set, sigset_t *oset);
 #endif
 
 #define _dispatch_queue_trylock(dq) dispatch_atomic_cmpxchg(&(dq)->dq_running, 0, 1)
+
 static DISPATCH_INLINE void _dispatch_queue_unlock(dispatch_queue_t dq);
 static void _dispatch_queue_invoke(dispatch_queue_t dq);
 static bool _dispatch_queue_wakeup_global(dispatch_queue_t dq);
 static struct dispatch_object_s *_dispatch_queue_concurrent_drain_one(dispatch_queue_t dq);
 
 static bool _dispatch_program_is_probably_callback_driven;
-
-#if DISPATCH_COCOA_COMPAT
-void (*dispatch_begin_thread_4GC)(void) = dummy_function;
-void (*dispatch_end_thread_4GC)(void) = dummy_function;
-void *(*_dispatch_begin_NSAutoReleasePool)(void) = (void *)dummy_function;
-void (*_dispatch_end_NSAutoReleasePool)(void *) = (void *)dummy_function;
-static void _dispatch_queue_wakeup_main(void);
-
-static dispatch_once_t _dispatch_main_q_port_pred;
-static bool main_q_is_draining;
-static mach_port_t main_q_port;
-#endif
 
 static void _dispatch_cache_cleanup2(void *value);
 
@@ -244,126 +233,140 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 // dq_running is set to 2 so that barrier operations go through the slow path
 struct dispatch_queue_s _dispatch_root_queues[] = {
 	{
-		/*.do_vtable         = */	&_dispatch_queue_root_vtable,
-		/*.do_next           = */	0,
-		/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-		/*.do_targetq        = */	0,
-		/*.do_ctxt           = */	&_dispatch_root_queue_contexts[0],
-		/*.do_finalizer      = */	0,
-		/*.dq_running        = */	2,
-		/*.dq_width          = */	UINT32_MAX,
-		/*.dq_items_tail     = */	0,
-		/*.dq_items_head     = */	0,
-		/*.dq_serialnum      = */	4,
-		/*.dq_finalizer_ctxt = */	0,
-		/*.dq_label          = */	"com.apple.root.low-priority",
+		/*.do_vtable               = */	&_dispatch_queue_root_vtable,
+		/*.do_next                 = */	0,
+		/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+		/*.do_targetq              = */	0,
+		/*.do_ctxt                 = */	&_dispatch_root_queue_contexts[0],
+		/*.do_finalizer            = */	0,
+		/*.dq_running              = */	2,
+		/*.dq_width                = */	UINT32_MAX,
+		/*.dq_items_tail           = */	0,
+		/*.dq_items_head           = */	0,
+		/*.dq_serialnum            = */	4,
+		/*.dq_finalizer_ctxt       = */	0,
+		/*.dq_manually_drained     = */	0,
+		/*.dq_is_manually_draining = */	false,
+		/*.dq_label                = */	"com.apple.root.low-priority",
 	},
 	{
-		/*.do_vtable         = */	&_dispatch_queue_root_vtable,
-		/*.do_next           = */	0,
-		/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-		/*.do_targetq        = */	0,
-		/*.do_ctxt           = */	&_dispatch_root_queue_contexts[1],
-		/*.do_finalizer      = */	0,
-		/*.dq_running        = */	2,
-		/*.dq_width          = */	UINT32_MAX,
-		/*.dq_items_tail     = */	0,
-		/*.dq_items_head     = */	0,
-		/*.dq_serialnum      = */	5,
-		/*.dq_finalizer_ctxt = */	0,
-		/*.dq_label          = */	"com.apple.root.low-overcommit-priority",
+		/*.do_vtable               = */	&_dispatch_queue_root_vtable,
+		/*.do_next                 = */	0,
+		/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+		/*.do_targetq              = */	0,
+		/*.do_ctxt                 = */	&_dispatch_root_queue_contexts[1],
+		/*.do_finalizer            = */	0,
+		/*.dq_running              = */	2,
+		/*.dq_width                = */	UINT32_MAX,
+		/*.dq_items_tail           = */	0,
+		/*.dq_items_head           = */	0,
+		/*.dq_serialnum            = */	5,
+		/*.dq_finalizer_ctxt       = */	0,
+		/*.dq_manually_drained     = */	0,
+		/*.dq_is_manually_draining = */	false,
+		/*.dq_label                = */	"com.apple.root.low-overcommit-priority",
 	},
 	{
-		/*.do_vtable         = */	&_dispatch_queue_root_vtable,
-		/*.do_next           = */	0,
-		/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-		/*.do_targetq        = */	0,
-		/*.do_ctxt           = */	&_dispatch_root_queue_contexts[2],
-		/*.do_finalizer      = */	0,
-		/*.dq_running        = */	2,
-		/*.dq_width          = */	UINT32_MAX,
-		/*.dq_items_tail     = */	0,
-		/*.dq_items_head     = */	0,
-		/*.dq_serialnum      = */	6,
-		/*.dq_finalizer_ctxt = */	0,
-		/*.dq_label          = */	"com.apple.root.default-priority",
+		/*.do_vtable               = */	&_dispatch_queue_root_vtable,
+		/*.do_next                 = */	0,
+		/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+		/*.do_targetq              = */	0,
+		/*.do_ctxt                 = */	&_dispatch_root_queue_contexts[2],
+		/*.do_finalizer            = */	0,
+		/*.dq_running              = */	2,
+		/*.dq_width                = */	UINT32_MAX,
+		/*.dq_items_tail           = */	0,
+		/*.dq_items_head           = */	0,
+		/*.dq_serialnum            = */	6,
+		/*.dq_finalizer_ctxt       = */	0,
+		/*.dq_manually_drained     = */	0,
+		/*.dq_is_manually_draining = */	false,
+		/*.dq_label                = */	"com.apple.root.default-priority",
 	},
 	{
-		/*.do_vtable         = */	&_dispatch_queue_root_vtable,
-		/*.do_next           = */	0,
-		/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-		/*.do_targetq        = */	0,
-		/*.do_ctxt           = */	&_dispatch_root_queue_contexts[3],
-		/*.do_finalizer      = */	0,
-		/*.dq_running        = */	2,
-		/*.dq_width          = */	UINT32_MAX,
-		/*.dq_items_tail     = */	0,
-		/*.dq_items_head     = */	0,
-		/*.dq_serialnum      = */	7,
-		/*.dq_finalizer_ctxt = */	0,
-		/*.dq_label          = */	"com.apple.root.default-overcommit-priority",
+		/*.do_vtable               = */	&_dispatch_queue_root_vtable,
+		/*.do_next                 = */	0,
+		/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+		/*.do_targetq              = */	0,
+		/*.do_ctxt                 = */	&_dispatch_root_queue_contexts[3],
+		/*.do_finalizer            = */	0,
+		/*.dq_running              = */	2,
+		/*.dq_width                = */	UINT32_MAX,
+		/*.dq_items_tail           = */	0,
+		/*.dq_items_head           = */	0,
+		/*.dq_serialnum            = */	7,
+		/*.dq_finalizer_ctxt       = */	0,
+		/*.dq_manually_drained     = */	0,
+		/*.dq_is_manually_draining = */	false,
+		/*.dq_label                = */	"com.apple.root.default-overcommit-priority",
 	},
 	{
-		/*.do_vtable         = */	&_dispatch_queue_root_vtable,
-		/*.do_next           = */	0,
-		/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-		/*.do_targetq        = */	0,
-		/*.do_ctxt           = */	&_dispatch_root_queue_contexts[4],
-		/*.do_finalizer      = */	0,
-		/*.dq_running        = */	2,
-		/*.dq_width          = */	UINT32_MAX,
-		/*.dq_items_tail     = */	0,
-		/*.dq_items_head     = */	0,
-		/*.dq_serialnum      = */	8,
-		/*.dq_finalizer_ctxt = */	0,
-		/*.dq_label          = */	"com.apple.root.high-priority",
+		/*.do_vtable               = */	&_dispatch_queue_root_vtable,
+		/*.do_next                 = */	0,
+		/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+		/*.do_targetq              = */	0,
+		/*.do_ctxt                 = */	&_dispatch_root_queue_contexts[4],
+		/*.do_finalizer            = */	0,
+		/*.dq_running              = */	2,
+		/*.dq_width                = */	UINT32_MAX,
+		/*.dq_items_tail           = */	0,
+		/*.dq_items_head           = */	0,
+		/*.dq_serialnum            = */	8,
+		/*.dq_finalizer_ctxt       = */	0,
+		/*.dq_manually_drained     = */	0,
+		/*.dq_is_manually_draining = */	false,
+		/*.dq_label                = */	"com.apple.root.high-priority",
 	},
 	{
-		/*.do_vtable         = */	&_dispatch_queue_root_vtable,
-		/*.do_next           = */	0,
-		/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-		/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-		/*.do_targetq        = */	0,
-		/*.do_ctxt           = */	&_dispatch_root_queue_contexts[5],
-		/*.do_finalizer      = */	0,
-		/*.dq_running        = */	2,
-		/*.dq_width          = */	UINT32_MAX,
-		/*.dq_items_tail     = */	0,
-		/*.dq_items_head     = */	0,
-		/*.dq_serialnum      = */	9,
-		/*.dq_finalizer_ctxt = */	0,
-		/*.dq_label          = */	"com.apple.root.high-overcommit-priority",
+		/*.do_vtable               = */	&_dispatch_queue_root_vtable,
+		/*.do_next                 = */	0,
+		/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+		/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+		/*.do_targetq              = */	0,
+		/*.do_ctxt                 = */	&_dispatch_root_queue_contexts[5],
+		/*.do_finalizer            = */	0,
+		/*.dq_running              = */	2,
+		/*.dq_width                = */	UINT32_MAX,
+		/*.dq_items_tail           = */	0,
+		/*.dq_items_head           = */	0,
+		/*.dq_serialnum            = */	9,
+		/*.dq_finalizer_ctxt       = */	0,
+		/*.dq_manually_drained     = */	0,
+		/*.dq_is_manually_draining = */	false,
+		/*.dq_label                = */	"com.apple.root.high-overcommit-priority",
 	},
 };
 
 // 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
 struct dispatch_queue_s _dispatch_main_q = {
-	/*.do_vtable         = */	&_dispatch_queue_vtable,
-	/*.do_next           = */	0,
-	/*.do_ref_cnt        = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-	/*.do_xref_cnt       = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
-	/*.do_suspend_cnt    = */	DISPATCH_OBJECT_SUSPEND_LOCK,
-	/*.do_targetq        = */	&_dispatch_root_queues[DISPATCH_ROOT_QUEUE_COUNT / 2],
-	/*.do_ctxt           = */	0,
-	/*.do_finalizer      = */	0,
-	/*.dq_running        = */	1,
-	/*.dq_width          = */	1,
-	/*.dq_items_tail     = */	0,
-	/*.dq_items_head     = */	0,
-	/*.dq_serialnum      = */	1,
-	/*.dq_finalizer_ctxt = */	0,
-	/*.dq_label          = */	"com.apple.main-thread",
+	/*.do_vtable               = */	&_dispatch_queue_vtable,
+	/*.do_next                 = */	0,
+	/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+	/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+	/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+	/*.do_targetq              = */	&_dispatch_root_queues[DISPATCH_ROOT_QUEUE_COUNT / 2],
+	/*.do_ctxt                 = */	0,
+	/*.do_finalizer            = */	0,
+	/*.dq_running              = */	1,
+	/*.dq_width                = */	1,
+	/*.dq_items_tail           = */	0,
+	/*.dq_items_head           = */	0,
+	/*.dq_serialnum            = */	1,
+	/*.dq_finalizer_ctxt       = */	0,
+	/*.dq_manually_drained     = */	0,
+	/*.dq_is_manually_draining = */	false,
+	/*.dq_label                = */	"com.apple.main-thread",
 };
 
 #if DISPATCH_PERF_MON
@@ -604,6 +607,8 @@ _dispatch_queue_init(dispatch_queue_t dq)
 	dq->dq_running = 0;
 	dq->dq_width = 1;
 	dq->dq_serialnum = dispatch_atomic_inc(&_dispatch_queue_serial_numbers) - 1;
+	dq->dq_manually_drained = 0;
+	dq->dq_is_manually_draining = false;
 }
 
 dispatch_queue_t
@@ -789,8 +794,8 @@ _dispatch_barrier_sync_f_slow_invoke(void *ctxt)
 	struct dispatch_barrier_sync_slow2_s *dbss2 = ctxt;
 
 	dispatch_assert(dbss2->dbss2_dq == dispatch_get_current_queue());
-	// ALL blocks on the main queue, must be run on the main thread
-	if (dbss2->dbss2_dq == dispatch_get_main_queue()) {
+	// ALL blocks on thread-affinitized queues drain in those threads
+	if (dbss2->dbss2_dq->dq_manually_drained) {
 		dbss2->dbss2_func(dbss2->dbss2_ctxt);
 	} else {
 		dispatch_suspend(as_do(dbss2->dbss2_dq));
@@ -826,7 +831,7 @@ _dispatch_barrier_sync_f_slow(dispatch_queue_t dq, void *ctxt, dispatch_function
 	_dispatch_queue_push(dq, as_do((void *)&dbss));
 	dispatch_semaphore_wait(dbss2.dbss2_sema, DISPATCH_TIME_FOREVER);
 
-	if (dq != dispatch_get_main_queue()) {
+	if (!dq->dq_manually_drained) {
 		_dispatch_thread_setspecific(dispatch_queue_key, dq);
 		func(ctxt);
 		_dispatch_workitem_inc();
@@ -843,7 +848,7 @@ dispatch_barrier_sync(dispatch_queue_t dq, void (^work)(void))
 	// Blocks submitted to the main queue MUST be run on the main thread,
 	// therefore we must Block_copy in order to notify the thread-local
 	// garbage collector that the objects are transferring to the main thread
-	if (dq == dispatch_get_main_queue()) {
+	if (dq->dq_manually_drained) {
 		dispatch_block_t block = Block_copy(work);
 		return dispatch_barrier_sync_f(dq, block, _dispatch_call_block_and_release);
 	}	
@@ -963,32 +968,6 @@ dispatch_queue_get_label(dispatch_queue_t dq)
 	return dq->dq_label;
 }
 
-#if DISPATCH_COCOA_COMPAT
-static void
-_dispatch_main_q_port_init(void *ctxt DISPATCH_UNUSED)
-{
-	kern_return_t kr;
-
-	kr = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &main_q_port);
-	DISPATCH_VERIFY_MIG(kr);
-	(void)dispatch_assume_zero(kr);
-	kr = mach_port_insert_right(mach_task_self(), main_q_port, main_q_port, MACH_MSG_TYPE_MAKE_SEND);
-	DISPATCH_VERIFY_MIG(kr);
-	(void)dispatch_assume_zero(kr);
-
-	_dispatch_program_is_probably_callback_driven = true;
-	_dispatch_safe_fork = false;
-}
-
-// 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
-DISPATCH_NOINLINE
-static void
-_dispatch_queue_set_mainq_drain_state(bool arg)
-{
-	main_q_is_draining = arg;
-}
-#endif
-
 /*
  * XXXRW: Work-around for possible clang bug in which __builtin_trap() is not
  * marked noreturn, leading to a build error as dispatch_main() *is* marked
@@ -1028,12 +1007,12 @@ _dispatch_sigsuspend(void *ctxt DISPATCH_UNUSED)
 
 DISPATCH_NOINLINE
 static void
-_dispatch_queue_cleanup2(void)
+_dispatch_queue_cleanup2(dispatch_queue_t q)
 {
-	dispatch_atomic_dec(&_dispatch_main_q.dq_running);
+	dispatch_atomic_dec(q->dq_running);
 
-	if (dispatch_atomic_sub(&_dispatch_main_q.do_suspend_cnt, DISPATCH_OBJECT_SUSPEND_LOCK) == 0) {
-		_dispatch_wakeup(as_do(&_dispatch_main_q));
+	if (dispatch_atomic_sub(&(q->do_suspend_cnt), DISPATCH_OBJECT_SUSPEND_LOCK) == 0) {
+		_dispatch_wakeup(as_do(q));
 	}
 
 #if !TARGET_OS_WIN32
@@ -1046,23 +1025,7 @@ _dispatch_queue_cleanup2(void)
 	}
 #endif
 
-#if DISPATCH_COCOA_COMPAT
-	dispatch_once_f(&_dispatch_main_q_port_pred, NULL, _dispatch_main_q_port_init);
-
-	mach_port_t mp = main_q_port;
-	kern_return_t kr;
-
-	main_q_port = 0;
-
-	if (mp) {
-		kr = mach_port_deallocate(mach_task_self(), mp);
-		DISPATCH_VERIFY_MIG(kr);
-		(void)dispatch_assume_zero(kr);
-		kr = mach_port_mod_refs(mach_task_self(), mp, MACH_PORT_RIGHT_RECEIVE, -1);
-		DISPATCH_VERIFY_MIG(kr);
-		(void)dispatch_assume_zero(kr);
-	}
-#endif
+	_dispatch_queue_cleanup_manual(q);
 }
 
 #ifndef DISPATCH_NO_LEGACY
@@ -1081,8 +1044,8 @@ dispatch_get_concurrent_queue(long pri)
 static void
 _dispatch_queue_cleanup(void *ctxt)
 {
-	if (ctxt == &_dispatch_main_q) {
-		return _dispatch_queue_cleanup2();
+	if(((dispatch_queue_t)ctxt)->dq_manually_drained) {
+		return _dispatch_queue_cleanup2(ctxt);
 	}
 	// POSIX defines that destructors are only called if 'ctxt' is non-null
 	DISPATCH_CRASH("Premature thread exit while a dispatch queue is running");
@@ -1117,28 +1080,22 @@ libdispatch_init(void)
 	_dispatch_thread_key_init_np(dispatch_bcounter_key, NULL);
 #endif
 #else /* !HAVE_PTHREAD_KEY_INIT_NP */
-	_dispatch_thread_key_create(&dispatch_queue_key,
-	    _dispatch_queue_cleanup);
-	_dispatch_thread_key_create(&dispatch_sema4_key,
-	    (void (*)(void *))dispatch_release); // use the extern release
-	_dispatch_thread_key_create(&dispatch_cache_key,
-	    _dispatch_cache_cleanup2);
+	_dispatch_thread_key_create(&dispatch_queue_key, _dispatch_queue_cleanup);
+	_dispatch_thread_key_create(&dispatch_sema4_key, (void (*)(void *))dispatch_release); // use the extern release
+	_dispatch_thread_key_create(&dispatch_cache_key, _dispatch_cache_cleanup2);
+	_dispatch_thread_key_create(&dispatch_threaded_queue_key, _dispatch_queue_cleanup);
 #ifdef DISPATCH_PERF_MON
 	_dispatch_thread_key_create(&dispatch_bcounter_key, NULL);
 #endif
 #endif /* HAVE_PTHREAD_KEY_INIT_NP */
 
+	_dispatch_main_q.dq_manually_drained = pthread_self();
 	_dispatch_thread_setspecific(dispatch_queue_key, &_dispatch_main_q);
 
 	_dispatch_queue_set_width_init();
 }
 
 #if TARGET_OS_WIN32
-
-void noop(void* unused)
-{
-	UNREFERENCED_PARAMETER(unused);
-}
 
 void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 {
@@ -1178,6 +1135,20 @@ PIMAGE_TLS_CALLBACK _xl_c = call_libdispatch_init;
 
 #endif
 
+dispatch_queue_t
+dispatch_get_current_thread_queue(void)
+{
+	dispatch_queue_t q = _dispatch_thread_getspecific(dispatch_threaded_queue_key);
+	if(q == NULL) {
+		char thread_label[DISPATCH_QUEUE_MIN_LABEL_SIZE] = {0};
+		snprintf(thread_label, DISPATCH_QUEUE_MIN_LABEL_SIZE, "thread-q-%x", pthread_self());
+		q = dispatch_queue_create(thread_label, 0);
+		q->dq_manually_drained = pthread_self();
+		_dispatch_thread_setspecific(dispatch_threaded_queue_key, q);
+	}
+	return q;
+}
+
 void
 _dispatch_queue_unlock(dispatch_queue_t dq)
 {
@@ -1191,6 +1162,7 @@ _dispatch_queue_unlock(dispatch_queue_t dq)
 #if TARGET_OS_WIN32
 static void _dispatch_noop(void* unused DISPATCH_UNUSED)
 {
+	UNREFERENCED_PARAMETER(unused);
 }
 #endif
 
@@ -1200,7 +1172,7 @@ _dispatch_wakeup(dispatch_object_t dou)
 {
 	dispatch_queue_t tq;
 #if TARGET_OS_WIN32
-	bool needs_sync = (dx_type(dou._do) & _DISPATCH_SOURCE_TYPE != 0) && !dou._ds->ds_is_installed;
+	bool needs_sync = ((dx_type(dou._do) & _DISPATCH_SOURCE_TYPE) != 0) && !dou._ds->ds_is_installed;
 #endif
 
 	if (slowpath(DISPATCH_OBJECT_SUSPENDED(dou._do))) {
@@ -1211,11 +1183,9 @@ _dispatch_wakeup(dispatch_object_t dou)
 	}
 
 	if (!_dispatch_trylock(dou._do)) {
-#if DISPATCH_COCOA_COMPAT
-		if (dou._dq == &_dispatch_main_q) {
-			_dispatch_queue_wakeup_main();
+		if(dou._dq->dq_manually_drained) {
+			_dispatch_queue_wakeup_manual(dou._dq);
 		}
-#endif
 		return NULL;
 	}
 	_dispatch_retain(as_do(dou._do));
@@ -1237,6 +1207,9 @@ _dispatch_wakeup(dispatch_object_t dou)
 	//                                                                   process message
 	//                                                                   CreateIoCompletionPort(..., h, ...)
 	//                                                                   <never going to receive the missed notification>
+	// I am not actually 100% sure this fixes the race: I might have to do something more aggressive like registering
+	// directly from this thread. The primary reason for uncertainty is that I think things end up getting queued
+	// to parallel queues, and there's no way to reliably drain a parallel queue.
 	if(needs_sync) {
 		// first, ensure that the initial setup messages get pushed from the dispatch source to the manager queue
 		dispatch_sync_f(dou._dq, NULL, &_dispatch_noop);
@@ -1246,31 +1219,6 @@ _dispatch_wakeup(dispatch_object_t dou)
 #endif
 	return tq;	// libdispatch doesn't need this, but the Instrument DTrace probe does
 }
-
-#if DISPATCH_COCOA_COMPAT
-DISPATCH_NOINLINE
-void
-_dispatch_queue_wakeup_main(void)
-{
-	kern_return_t kr;
-
-	dispatch_once_f(&_dispatch_main_q_port_pred, NULL, _dispatch_main_q_port_init);
-
-	kr = _dispatch_send_wakeup_main_thread(main_q_port, 0);
-
-	switch (kr) {
-	case MACH_SEND_TIMEOUT:
-	case MACH_SEND_TIMED_OUT:
-	case MACH_SEND_INVALID_DEST:
-		break;
-	default:
-		(void)dispatch_assume_zero(kr);
-		break;
-	}
-
-	_dispatch_safe_fork = false;
-}
-#endif
 
 #if HAVE_PTHREAD_WORKQUEUES
 static DISPATCH_INLINE int
@@ -1745,26 +1693,6 @@ dispatch_debug_queue(dispatch_queue_t dq, const char* str) {
 }
 #endif
 
-#if DISPATCH_COCOA_COMPAT
-void
-_dispatch_main_queue_callback_4CF(mach_msg_header_t *msg DISPATCH_UNUSED)
-{
-	if (main_q_is_draining) {
-		return;
-	}
-	_dispatch_queue_set_mainq_drain_state(true);
-	_dispatch_queue_serial_drain_till_empty(&_dispatch_main_q);
-	_dispatch_queue_set_mainq_drain_state(false);
-}
-
-mach_port_t
-_dispatch_get_main_queue_port_4CF(void)
-{
-	dispatch_once_f(&_dispatch_main_q_port_pred, NULL, _dispatch_main_q_port_init);
-	return main_q_port;
-}
-#endif
-
 #ifndef DISPATCH_NO_LEGACY
 static void
 dispatch_queue_attr_dispose(dispatch_queue_attr_t attr)
@@ -1774,9 +1702,12 @@ dispatch_queue_attr_dispose(dispatch_queue_attr_t attr)
 }
 
 static const struct dispatch_queue_attr_vtable_s dispatch_queue_attr_vtable = {
-	.do_type = DISPATCH_QUEUE_ATTR_TYPE,
-	.do_kind = "queue-attr",
-	.do_dispose = dispatch_queue_attr_dispose,
+	/*.do_type    = */	DISPATCH_QUEUE_ATTR_TYPE,
+	/*.do_kind    = */	"queue-attr",
+	/*.do_debug   = */	0,
+	/*.do_invoke  = */	0,
+	/*.do_probe   = */	0,
+	/*.do_dispose = */ dispatch_queue_attr_dispose
 };
 
 dispatch_queue_attr_t
