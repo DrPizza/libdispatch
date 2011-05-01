@@ -59,6 +59,8 @@ struct dispatch_queue_vtable_s {
 	DISPATCH_VTABLE_HEADER(dispatch_queue_s);
 };
 
+extern const struct dispatch_queue_vtable_s _dispatch_queue_vtable;
+
 #define DISPATCH_QUEUE_MIN_LABEL_SIZE	64
 
 #ifndef DISPATCH_NO_LEGACY
@@ -148,5 +150,7 @@ _dispatch_continuation_alloc_cacheonly(void)
 	}
 	return dc;
 }
+
+extern bool _dispatch_program_is_probably_callback_driven;
 
 #endif

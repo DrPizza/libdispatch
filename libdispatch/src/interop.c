@@ -16,6 +16,63 @@ static UINT _dispatch_thread_window_message;
 #endif
 
 // 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
+struct dispatch_queue_s _dispatch_main_q = {
+	/*.do_vtable               = */	&_dispatch_queue_vtable,
+	/*.do_next                 = */	0,
+	/*.do_ref_cnt              = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+	/*.do_xref_cnt             = */	DISPATCH_OBJECT_GLOBAL_REFCNT,
+	/*.do_suspend_cnt          = */	DISPATCH_OBJECT_SUSPEND_LOCK,
+	/*.do_targetq              = */	&_dispatch_root_queues[DISPATCH_ROOT_QUEUE_COUNT / 2],
+	/*.do_ctxt                 = */	0,
+	/*.do_finalizer            = */	0,
+	/*.dq_running              = */	1,
+	/*.dq_width                = */	1,
+	/*.dq_items_tail           = */	0,
+	/*.dq_items_head           = */	0,
+	/*.dq_serialnum            = */	1,
+	/*.dq_finalizer_ctxt       = */	0,
+	/*.dq_manually_drained     = */	0,
+	/*.dq_is_manually_draining = */	false,
+	/*.dq_label                = */	"com.apple.main-thread",
+};
+
+#undef dispatch_get_main_queue
+__OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_NA)
+dispatch_queue_t dispatch_get_main_queue(void);
+
+dispatch_queue_t
+dispatch_get_main_queue(void)
+{
+	return &_dispatch_main_q;
+}
+#define dispatch_get_main_queue() (&_dispatch_main_q)
+
+/*
+ * XXXRW: Work-around for possible clang bug in which __builtin_trap() is not
+ * marked noreturn, leading to a build error as dispatch_main() *is* marked
+ * noreturn.  Mask by marking __builtin_trap() as noreturn locally.
+ */
+#ifndef HAVE_NORETURN_BUILTIN_TRAP
+void __builtin_trap(void) __attribute__((__noreturn__));
+#endif
+
+void
+dispatch_main(void)
+{
+
+#if HAVE_PTHREAD_MAIN_NP
+	if (pthread_main_np()) {
+#endif
+		_dispatch_program_is_probably_callback_driven = true;
+		pthread_exit(NULL);
+		DISPATCH_CRASH("pthread_exit() returned");
+#if HAVE_PTHREAD_MAIN_NP
+	}
+	DISPATCH_CLIENT_CRASH("dispatch_main() must be called on the main thread");
+#endif
+}
+
+// 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
 DISPATCH_NOINLINE
 static void
 _dispatch_queue_set_manual_drain_state(dispatch_queue_t q, bool arg)
@@ -52,9 +109,27 @@ _dispatch_main_q_port_init(void *ctxt DISPATCH_UNUSED)
 	_dispatch_safe_fork = false;
 }
 
+static void
+_dispatch_sigsuspend(void *ctxt DISPATCH_UNUSED)
+{
+	static const sigset_t mask = 0;
+
+	for (;;) {
+		sigsuspend(&mask);
+	}
+}
+
 void
 _dispatch_main_q_port_clean(void)
 {
+	// overload the "probably" variable to mean that dispatch_main() or
+	// similar non-POSIX API was called
+	// this has to run before the DISPATCH_COCOA_COMPAT below
+	if (_dispatch_program_is_probably_callback_driven) {
+		dispatch_async_f(_dispatch_get_root_queue(0, 0), NULL, _dispatch_sigsuspend);
+		sleep(1);	// workaround 6778970
+	}
+
 	dispatch_once_f(&_dispatch_main_q_port_pred, NULL, _dispatch_main_q_port_init);
 
 	mach_port_t mp = main_q_port;
