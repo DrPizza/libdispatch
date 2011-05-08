@@ -26,5 +26,8 @@
     <ClInclude Include="src\dispatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\scopeguard.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
