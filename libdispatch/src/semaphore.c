@@ -35,6 +35,13 @@
 		}							\
 	} while (0)
 #endif
+#if USE_WIN32_SEM
+#define	DISPATCH_SEMAPHORE_VERIFY_RET(x) do {				\
+		if ((x) == 0) {					\
+			DISPATCH_CRASH("flawed group/semaphore logic");	\
+		}							\
+	} while (0)
+#endif
 
 struct dispatch_semaphore_vtable_s {
 	DISPATCH_VTABLE_HEADER(dispatch_semaphore_s);
@@ -160,7 +167,7 @@ _dispatch_semaphore_create_handle(HANDLE *s4)
 		return;
 	}
 
-	// lazily allocate the semaphore port
+	// lazily allocate the semaphore handle
 
 	while ((tmp = CreateSemaphore(NULL, 0, LONG_MAX, NULL)) == NULL) {
 		dispatch_assume(tmp);
@@ -390,6 +397,7 @@ _dispatch_semaphore_signal_slow(dispatch_semaphore_t dsema)
 #if USE_WIN32_SEM
 	// Signal the semaphore.
 	ret = ReleaseSemaphore(dsema->dsema_handle, 1, NULL);
+	DISPATCH_SEMAPHORE_VERIFY_RET(ret);
 #endif
 
 	_dispatch_release(as_do(dsema));
@@ -473,9 +481,11 @@ _dispatch_group_wake(dispatch_semaphore_t dsema)
 		} while (--rval);
 #endif
 #if USE_WIN32_SEM
-		// Signal the semaphore.
-		ret = ReleaseSemaphore(dsema->dsema_waiter_handle, 1, NULL);
-		dispatch_assume(ret);
+		_dispatch_semaphore_create_handle(&dsema->dsema_waiter_handle);
+		do {
+			ret = ReleaseSemaphore(dsema->dsema_waiter_handle, 1, NULL);
+			DISPATCH_SEMAPHORE_VERIFY_RET(ret);
+		} while (--rval);
 #endif
 	}
 	while (head) {
@@ -526,6 +536,9 @@ again:
 #if USE_MACH_SEM
 	_dispatch_semaphore_create_port(&dsema->dsema_waiter_port);
 #endif
+#if USE_WIN32_SEM
+	_dispatch_semaphore_create_handle(&dsema->dsema_waiter_handle);
+#endif
 	
 	// From xnu/osfmk/kern/sync_sema.c:
 	// wait_semaphore->count = -1;  /* we don't keep an actual count */
@@ -570,7 +583,7 @@ again:
 			msec = (DWORD)(nsec / (uint64_t)1000000);
 			ret = WaitForSingleObject(dsema->dsema_waiter_handle, msec);
 		} while (ret != WAIT_OBJECT_0 && ret != WAIT_TIMEOUT);
-		if (ret == WAIT_TIMEOUT) {
+		if (ret != WAIT_TIMEOUT) {
 			break;
 		}
 #endif /* USE_WIN32_SEM */
