@@ -124,12 +124,12 @@ struct dispatch_source_type_s {
 
 #ifdef DISPATCH_NO_LEGACY
 enum {
-        DISPATCH_TIMER_WALL_CLOCK       = 0x4,
-};
-enum {
-        DISPATCH_TIMER_INTERVAL = 0x0,
-        DISPATCH_TIMER_ONESHOT  = 0x1,
-        DISPATCH_TIMER_ABSOLUTE = 0x3,
+        DISPATCH_TIMER_INTERVAL   = 0x0,
+        DISPATCH_TIMER_ONESHOT    = 0x1,
+        DISPATCH_TIMER_TYPE_MASK  = 0x1,
+        DISPATCH_TIMER_ABSOLUTE   = 0x0,
+        DISPATCH_TIMER_WALL_CLOCK = 0x2,
+        DISPATCH_TIMER_CLOCK_MASK = 0x2
 };
 #if HAVE_MACH
 enum {

@@ -540,7 +540,7 @@ dispatch_source_get_mask(dispatch_source_t source);
  */
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_WARN_RESULT DISPATCH_PURE DISPATCH_NOTHROW
-uintptr_t
+unsigned long
 dispatch_source_get_data(dispatch_source_t source);
 
 /*!

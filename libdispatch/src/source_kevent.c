@@ -654,7 +654,7 @@ static const struct kevent _dispatch_source_type_timer_ke = {
 
 const struct dispatch_source_type_s _dispatch_source_type_timer = {
 	/* .opaque = */	(void *)&_dispatch_source_type_timer_ke,
-	/* .mask   = */	DISPATCH_TIMER_INTERVAL|DISPATCH_TIMER_ONESHOT|DISPATCH_TIMER_ABSOLUTE|DISPATCH_TIMER_WALL_CLOCK,
+	/* .mask   = */	DISPATCH_TIMER_TYPE_MASK | DISPATCH_TIMER_CLOCK_MASK,
 	/* .init   = */	dispatch_source_type_timer_init,
 };
 
@@ -857,7 +857,7 @@ _dispatch_timer_list_update(dispatch_source_t ds)
 	TAILQ_REMOVE(&ds->ds_dkev->dk_sources, ds, ds_list);
 
 	// change the list if the clock type has changed
-	if (ds->ds_timer.flags & DISPATCH_TIMER_WALL_CLOCK) {
+	if ((ds->ds_timer.flags & DISPATCH_TIMER_CLOCK_MASK) == DISPATCH_TIMER_WALL_CLOCK) {
 		idx = DISPATCH_TIMER_INDEX_WALL;
 	} else {
 		idx = DISPATCH_TIMER_INDEX_MACH;
@@ -907,7 +907,7 @@ _dispatch_run_timers2(unsigned int timer)
 			break;
 		}
 
-		if (ds->ds_timer.flags & (DISPATCH_TIMER_ONESHOT|DISPATCH_TIMER_ABSOLUTE)) {
+		if ((ds->ds_timer.flags & DISPATCH_TIMER_TYPE_MASK) == DISPATCH_TIMER_ONESHOT) {
 			dispatch_atomic_inc(&ds->ds_pending_data);
 			ds->ds_timer.target = 0;
 		} else {

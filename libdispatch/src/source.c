@@ -46,7 +46,7 @@ void
 dispatch_source_cancel(dispatch_source_t ds)
 {
 #if DISPATCH_DEBUG
-	dispatch_debug(ds, __FUNCTION__);
+	dispatch_debug(as_do(ds), __FUNCTION__);
 #endif
 	// Right after we set the cancel flag, someone else
 	// could potentially invoke the source, do the cancelation, 
@@ -65,7 +65,7 @@ _dispatch_source_xref_release(dispatch_source_t ds)
 {
 #ifndef DISPATCH_NO_LEGACY
 	if (ds->ds_is_legacy) {
-		if (!(ds->ds_timer.flags & DISPATCH_TIMER_ONESHOT)) {
+		if (!(ds->ds_timer.flags & DISPATCH_TIMER_TYPE_MASK == DISPATCH_TIMER_ONESHOT)) {
 			dispatch_source_cancel(ds);
 		}
 		// Clients often leave sources suspended at the last release
@@ -98,7 +98,7 @@ dispatch_source_get_handle(dispatch_source_t ds)
 	return ds->ds_ident_hack;
 }
 
-uintptr_t
+unsigned long
 dispatch_source_get_data(dispatch_source_t ds)
 {
 	return ds->ds_data;
@@ -420,7 +420,7 @@ dispatch_source_create(dispatch_source_type_t type,
 
 	dispatch_assert(!(ds->ds_is_level && ds->ds_is_adder));
 #if DISPATCH_DEBUG
-	dispatch_debug(ds, __FUNCTION__);
+	dispatch_debug(as_do(ds), __FUNCTION__);
 #endif
 
 	_dispatch_retain(as_do(ds->do_targetq));
@@ -643,9 +643,11 @@ dispatch_source_set_timer(dispatch_source_t ds,
 	struct dispatch_set_timer_params *params;
 	
 	// we use zero internally to mean disabled
-	if (interval == 0) {
-		interval = 1;
-	} else if ((int64_t)interval < 0) {
+	// we really don't.
+	//if (interval == 0) {
+	//	interval = 1;
+	//} else
+	if ((int64_t)interval < 0) {
 		// 6866347 - make sure nanoseconds won't overflow
 		interval = INT64_MAX;
 	}
@@ -678,15 +680,25 @@ dispatch_source_set_timer(dispatch_source_t ds,
 		params->values.target = -((int64_t)start);
 		params->values.interval = interval;
 		params->values.leeway = leeway;
+		params->values.flags &= ~DISPATCH_TIMER_CLOCK_MASK;
 		params->values.flags |= DISPATCH_TIMER_WALL_CLOCK;
 	} else {
 		// absolute clock
 		params->ident = DISPATCH_TIMER_INDEX_MACH;
 		params->values.start = start;
 		params->values.target = start;
-		params->values.interval = _dispatch_time_nano2mach(interval);
+		params->values.interval = interval == 0 ? 0 : max(_dispatch_time_nano2mach(interval), 1); // avoid flushing small intervals to zero.
 		params->values.leeway = _dispatch_time_nano2mach(leeway);
-		params->values.flags &= ~DISPATCH_TIMER_WALL_CLOCK;
+		params->values.flags &= ~DISPATCH_TIMER_CLOCK_MASK;
+		params->values.flags |= DISPATCH_TIMER_ABSOLUTE;
+	}
+
+	if(interval == 0) {
+		params->values.flags &= ~DISPATCH_TIMER_TYPE_MASK;
+		params->values.flags |= DISPATCH_TIMER_ONESHOT;
+	} else {
+		params->values.flags &= ~DISPATCH_TIMER_TYPE_MASK;
+		params->values.flags |= DISPATCH_TIMER_INTERVAL;
 	}
 
 	dispatch_barrier_async_f(&_dispatch_mgr_q, params, _dispatch_source_set_timer2);
