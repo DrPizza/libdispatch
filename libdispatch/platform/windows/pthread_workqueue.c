@@ -25,6 +25,7 @@ typedef struct _pthread_workitem
 {
 	void (*function)(void*);
 	void* context;
+	pthread_workqueue_t q;
 	pthread_timeritem_handle_t* handle;
 } _pthread_workitem;
 
@@ -115,7 +116,11 @@ int pthread_workqueue_attr_setqueuepriority_np(pthread_workqueue_attr_t* attr, i
 	default:
 		return EINVAL;
 	}
+	// I can't GetProcAddress this, because in spite of the documentation this
+	// is NOT an export from kernel32.dll, it's an inline function in winbase.h.
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN7)
 	SetThreadpoolCallbackPriority(&(*attr)->environment, new_priority);
+#endif
 	(*attr)->qprio = qprio;
 	return 0;
 }
@@ -255,15 +260,31 @@ void _pthread_workqueue_barrier(pthread_workqueue_t q, void* context)
 	free(context);
 }
 
+int _qprio_to_win32_prio(int qprio)
+{
+	switch(qprio)
+	{
+	case WORKQ_HIGH_PRIOQUEUE:
+		return THREAD_PRIORITY_HIGHEST;
+	case WORKQ_LOW_PRIOQUEUE:
+		return THREAD_PRIORITY_LOWEST;
+	default:
+		return THREAD_PRIORITY_NORMAL;
+	}
+}
+
 void CALLBACK _native_work_callback(TP_CALLBACK_INSTANCE* instance, void* context, TP_WORK* work)
 {
 	_pthread_workitem* workitem = context;
+	int original_priority = GetThreadPriority(GetCurrentThread());
 
 	UNREFERENCED_PARAMETER(instance);
 
+	SetThreadPriority(GetCurrentThread(), _qprio_to_win32_prio(workitem->q->attr->qprio));
 	workitem->function(workitem->context);
 	CloseThreadpoolWork(work);
 	free(workitem);
+	SetThreadPriority(GetCurrentThread(), original_priority);
 }
 
 int _pthread_workqueue_submit_workitem(pthread_workqueue_t workq, void (*workitem_func)(void*), void* workitem_arg, pthread_workitem_handle_t* workitem_handle)
@@ -277,6 +298,7 @@ int _pthread_workqueue_submit_workitem(pthread_workqueue_t workq, void (*workite
 	}
 
 	pw->function = workitem_func;
+	pw->q = workq;
 	pw->context = workitem_arg;
 	pwh.work = CreateThreadpoolWork(_native_work_callback, pw, &workq->attr->environment);
 	if(workitem_handle)
@@ -290,10 +312,12 @@ int _pthread_workqueue_submit_workitem(pthread_workqueue_t workq, void (*workite
 void CALLBACK _native_timer_callback(TP_CALLBACK_INSTANCE* instance, void* context, TP_TIMER* timer)
 {
 	_pthread_workitem* workitem = context;
+	int original_priority = GetThreadPriority(GetCurrentThread());
 
 	UNREFERENCED_PARAMETER(instance);
 	UNREFERENCED_PARAMETER(timer);
 
+	SetThreadPriority(GetCurrentThread(), _qprio_to_win32_prio(workitem->q->attr->qprio));
 	workitem->function(workitem->context);
 	if(workitem->handle)
 	{
@@ -301,6 +325,7 @@ void CALLBACK _native_timer_callback(TP_CALLBACK_INSTANCE* instance, void* conte
 		free(workitem->handle);
 		free(workitem);
 	}
+	SetThreadPriority(GetCurrentThread(), original_priority);
 }
 
 FILETIME _timespec_to_filetime(struct timespec* ts)
@@ -328,6 +353,7 @@ int _pthread_workqueue_submit_timeritem(pthread_workqueue_t workq, struct timesp
 
 	pw->function = workitem_func;
 	pw->context = workitem_arg;
+	pw->q = workq;
 	if(!timeritem_handle && !period)
 	{
 		timeritem_handle = calloc(1, sizeof(pthread_timeritem_handle_t));
