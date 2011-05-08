@@ -23,6 +23,9 @@
 #include "protocol.h"
 #endif
 
+static dispatch_once_t _dispatch_root_queues_pred;
+static void _dispatch_root_queues_init(void *);
+
 void
 dummy_function(void)
 {
@@ -940,7 +943,7 @@ DISPATCH_NOINLINE
 static void
 _dispatch_queue_cleanup2(dispatch_queue_t q)
 {
-	dispatch_atomic_dec(q->dq_running);
+	dispatch_atomic_dec(&q->dq_running);
 
 	if (dispatch_atomic_sub(&(q->do_suspend_cnt), DISPATCH_OBJECT_SUSPEND_LOCK) == 0) {
 		_dispatch_wakeup(as_do(q));
@@ -1022,31 +1025,35 @@ void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 {
 	UNREFERENCED_PARAMETER(dll);
 	UNREFERENCED_PARAMETER(reserved);
+
 	switch(reason)
 	{
 	case DLL_PROCESS_ATTACH:
 		libdispatch_init();
+		//dispatch_once_f(&_dispatch_root_queues_pred, NULL, _dispatch_root_queues_init);
 		break;
 	}
 }
 
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
-#pragma comment (linker, "/INCLUDE:__xl_c")
+//#pragma comment (linker, "/INCLUDE:__xl_e")
+#pragma comment (linker, "/INCLUDE:dispatch_tls_callback")
 #else
 #pragma comment (linker, "/INCLUDE:_tls_used")
-#pragma comment (linker, "/INCLUDE:_xl_c")
+//#pragma comment (linker, "/INCLUDE:_xl_e")
+#pragma comment (linker, "/INCLUDE:dispatch_tls_callback")
 #endif
 
 #ifdef _M_X64
-#pragma const_seg(".CRT$XLC")
+#pragma const_seg(".CRT$XLE")
 EXTERN_C const
 #else
-#pragma data_seg(".CRT$XLC")
+#pragma data_seg(".CRT$XLE")
 EXTERN_C
 #endif
 
-PIMAGE_TLS_CALLBACK _xl_c = call_libdispatch_init;
+PIMAGE_TLS_CALLBACK dispatch_tls_callback = call_libdispatch_init;
 
 #ifdef _M_X64
 #pragma const_seg()
@@ -1237,7 +1244,6 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 bool
 _dispatch_queue_wakeup_global(dispatch_queue_t dq)
 {
-	static dispatch_once_t pred;
 	struct dispatch_root_queue_context_s *qc = dq->do_ctxt;
 #if HAVE_PTHREAD_WORKQUEUES
 	pthread_workitem_handle_t wh;
@@ -1261,7 +1267,7 @@ _dispatch_queue_wakeup_global(dispatch_queue_t dq)
 	dispatch_debug_queue(dq, __FUNCTION__);
 #endif
 
-	dispatch_once_f(&pred, NULL, _dispatch_root_queues_init);
+	dispatch_once_f(&_dispatch_root_queues_pred, NULL, _dispatch_root_queues_init);
 
 #if HAVE_PTHREAD_WORKQUEUES
 	if (qc->dgq_kworkqueue) {
@@ -1607,7 +1613,7 @@ dispatch_queue_debug(dispatch_queue_t dq, char* buf, size_t bufsiz)
 void
 dispatch_debug_queue(dispatch_queue_t dq, const char* str) {
 	if (fastpath(dq)) {
-		dispatch_debug(dq, "%s", str);
+		dispatch_debug(as_do(dq), "%s", str);
 	} else {
 		_dispatch_log("queue[NULL]: %s", str);
 	}
@@ -1809,10 +1815,14 @@ _dispatch_log(const char *msg, ...)
 void
 _dispatch_logv(const char *msg, va_list ap)
 {
-#if DISPATCH_DEBUG
+#if TARGET_OS_WIN32
+	char message[256];
+	vsnprintf(message, sizeof(message) / sizeof(*message), msg, ap);
+	OutputDebugStringA(message);
+#elif DISPATCH_DEBUG
 	static FILE *logfile, *tmp;
-	char newbuf[strlen(msg) + 2];
-	char path[PATH_MAX];
+	char* newbuf = calloc(strlen(msg) + 2, 1);
+	char path[256];
 
 	sprintf(newbuf, "%s\n", msg);
 
@@ -1825,20 +1835,14 @@ _dispatch_logv(const char *msg, va_list ap)
 		} else {
 			struct timeval tv;
 			gettimeofday(&tv, NULL);
-			fprintf(logfile, "=== log file opened for %s[%u] at %ld.%06u ===\n",
-					getprogname() ?: "", getpid(), tv.tv_sec, tv.tv_usec);
+			fprintf(logfile, "=== log file opened for %s[%u] at %ld.%06u ===\n", getprogname() ? getprogname() : "", getpid(), tv.tv_sec, tv.tv_usec);
 		}
 	}
 	vfprintf(logfile, newbuf, ap);
 	fflush(logfile);
-#else
-#if TARGET_OS_WIN32
-	char message[256];
-	vsnprintf(message, sizeof(message) / sizeof(*message), msg, ap);
-	OutputDebugStringA(message);
+	free(newbuf);
 #else
 	vsyslog(LOG_NOTICE, msg, ap);
-#endif
 #endif
 }
 
