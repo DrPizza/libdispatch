@@ -86,6 +86,12 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
+#ifndef _MSC_VER
+#include <stdbool.h>
+#else
+#include "platform/windows/stdbool.h"
+#endif
+#include <stdarg.h>
 #include <stdint.h>
 
 #include "semaphore.h"

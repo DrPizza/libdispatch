@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DLLDebug|Win32">
+      <Configuration>DLLDebug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DLLDebug|x64">
+      <Configuration>DLLDebug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DLLRelease|Win32">
+      <Configuration>DLLRelease</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DLLRelease|x64">
+      <Configuration>DLLRelease</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="StaticDebug|Win32">
+      <Configuration>StaticDebug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="StaticDebug|x64">
+      <Configuration>StaticDebug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="StaticRelease|Win32">
+      <Configuration>StaticRelease</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="StaticRelease|x64">
+      <Configuration>StaticRelease</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C03FAE17-C6C1-4650-BB1E-A3EF066D49C0}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'">
+    <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=i386</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|Win32'">
+    <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=i386</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'">
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=i386</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|Win32'">
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=i386</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'">
+    <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=AMD64</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|x64'">
+    <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=AMD64</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=AMD64</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|x64'">
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>nmake /f makefile.mak all INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration) APPVER=6.0 TARGETOS=WINNT CPU=AMD64</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>nmake /f makefile.mak rebuild INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>nmake /f makefile.mak clean INTDIR=$(IntDir) OUTDIR=$(OutDir) PLATFORM=$(Platform) CONFIGURATION=$(Configuration)</NMakeCleanCommandLine>
+    <IncludePath>..\libdispatch\;..\libdispatch++\src\;$(IncludePath)</IncludePath>
+    <LibraryPath>..\libdispatch\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="readme.txt" />
+    <None Include="Makefile.mak" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libdispatch++\libdispatch++.vcxproj">
+      <Project>{e58dc5b2-6e32-11e0-9453-68f84824019b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libdispatch\libdispatch.vcxproj">
+      <Project>{cbf40332-6e32-11e0-b7c7-61f84824019b}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\dispatch_after.c" />
+    <ClCompile Include="src\dispatch_api.c" />
+    <ClCompile Include="src\dispatch_apply.c" />
+    <ClCompile Include="src\dispatch_cascade.c" />
+    <ClCompile Include="src\dispatch_debug.c" />
+    <ClCompile Include="src\dispatch_drift.c" />
+    <ClCompile Include="src\dispatch_group.c" />
+    <ClCompile Include="src\dispatch_pingpong.c" />
+    <ClCompile Include="src\dispatch_plusplus.cpp" />
+    <ClCompile Include="src\dispatch_priority.c" />
+    <ClCompile Include="src\dispatch_readsync.c" />
+    <ClCompile Include="src\dispatch_sema.c" />
+    <ClCompile Include="src\dispatch_starfish.c" />
+    <ClCompile Include="src\dispatch_test.c" />
+    <ClCompile Include="src\dispatch_timer_set_time.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\dispatch_test.h" />
+    <ClInclude Include="src\os_shims.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
