@@ -20,6 +20,13 @@
 
 #include "internal.h"
 
+static const unsigned __int64 intervals_per_second      = 10000000ULL;
+static const unsigned __int64 microseconds_per_second   = 1000000ULL;
+static const unsigned __int64 nanoseconds_per_second    = 1000000000ULL;
+static const unsigned __int64 intervals_per_microsecond = 10ULL;
+static const unsigned __int64 intervals_since_epoch     = 116444736000000000ULL;
+static const unsigned __int64 microseconds_since_epoch  = 11644473600000000ULL;
+
 uint64_t 
 _dispatch_get_nanoseconds(void)
 {
@@ -37,7 +44,8 @@ _dispatch_get_nanoseconds(void)
 	GetSystemTimeAsFileTime(&ft);
 	li.LowPart = ft.dwLowDateTime;
 	li.HighPart = ft.dwHighDateTime;
-	return li.QuadPart * 100ull;
+	li.QuadPart -= intervals_since_epoch;
+	return li.QuadPart * (nanoseconds_per_second / intervals_per_second);
 #endif /* TARGET_OS_WIN32 */
 }
 
@@ -63,7 +71,7 @@ dispatch_time(dispatch_time_t inval, int64_t delta)
 	}
 	// mach clock
 	delta = _dispatch_time_nano2mach(delta);
-   	if (inval == 0) {
+	if (inval == 0) {
 		inval = _dispatch_absolute_time();
 	}
 	if (delta >= 0) {
