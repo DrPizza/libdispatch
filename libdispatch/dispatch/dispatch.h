@@ -54,6 +54,7 @@
 #endif
 
 #include <dispatch/base.h>
+#include <dispatch/atomic.h>
 #include <dispatch/object.h>
 #include <dispatch/time.h>
 #include <dispatch/queue.h>

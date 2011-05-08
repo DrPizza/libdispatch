@@ -38,6 +38,7 @@
 
 #include "dispatch/dispatch.h"
 #include "dispatch/base.h"
+#include "dispatch/atomic.h"
 #include "dispatch/time.h"
 #include "dispatch/queue.h"
 #include "dispatch/object.h"

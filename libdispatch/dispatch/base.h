@@ -31,7 +31,22 @@
 #define DISPATCH_INLINE __forceinline
 #endif
 
-#ifdef __cplusplus
+#if __GNUC__
+#define DISPATCH_EXPORT extern __attribute__((visibility("default")))
+#else
+#if defined(_WINDLL) // building a DLL
+#define DISPATCH_EXPORT extern __declspec(dllexport)
+#elif defined(_LIB) // building a static lib
+#define DISPATCH_EXPORT extern
+#elif defined(USE_LIB) // linking a static lib
+#pragma message("Applications must link using /OPT:ICF, COMDAT folding, due to quirks of the Microsoft linker")
+#define DISPATCH_EXPORT extern
+#else
+#define DISPATCH_EXPORT extern __declspec(dllimport)
+#endif
+#endif
+
+#if defined(__cplusplus)
 /*
  * Dispatch objects are NOT C++ objects. Nevertheless, we can at least keep C++
  * aware of type compatibility.
@@ -43,8 +58,7 @@ private:
 	dispatch_object_s(const dispatch_object_s &);
 	void operator=(const dispatch_object_s &);
 } *dispatch_object_t;
-#else
-#ifdef __GNUC__
+#elif defined(__GNUC__)
 typedef union {
 	struct dispatch_object_s *_do;
 	struct dispatch_continuation_s *_dc;
@@ -56,7 +70,7 @@ typedef union {
 	struct dispatch_semaphore_s *_dsema;
 } dispatch_object_t __attribute__((transparent_union));
 
-static DISPATCH_INLINE dispatch_object_t as_do(dispatch_object_t do_)
+DISPATCH_INLINE dispatch_object_t as_do(dispatch_object_t do_)
 {
 	return do_;
 }
@@ -72,12 +86,12 @@ typedef union {
 	struct dispatch_semaphore_s *_dsema;
 } dispatch_object_t;
 
-static DISPATCH_INLINE dispatch_object_t as_do(void* v)
+DISPATCH_INLINE dispatch_object_t as_do(void* v)
 {
+#pragma warning(suppress : 4204) // warning C4204: nonstandard extension used : non-constant aggregate initializer
 	dispatch_object_t do_ = { v };
 	return do_;
 }
-#endif
 #endif
 
 typedef void (*dispatch_function_t)(void *);
@@ -142,12 +156,6 @@ typedef void (*dispatch_function_apply_t)(void*, size_t);
 #define DISPATCH_MALLOC
 /*! @parseOnly */
 #define DISPATCH_FORMAT(...)
-#endif
-
-#if __GNUC__
-#define DISPATCH_EXPORT extern __attribute__((visibility("default")))
-#else
-#define DISPATCH_EXPORT extern
 #endif
 
 #endif
