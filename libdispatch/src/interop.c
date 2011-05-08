@@ -12,6 +12,7 @@ static mach_port_t main_q_port;
 
 #if TARGET_OS_WIN32
 static dispatch_once_t _dispatch_window_message_pred;
+static UINT _dispatch_main_window_message;
 static UINT _dispatch_thread_window_message;
 #endif
 
@@ -45,7 +46,10 @@ dispatch_get_main_queue(void)
 {
 	return &_dispatch_main_q;
 }
+
+#if !TARGET_OS_WIN32
 #define dispatch_get_main_queue() (&_dispatch_main_q)
+#endif
 
 /*
  * XXXRW: Work-around for possible clang bug in which __builtin_trap() is not
@@ -109,27 +113,9 @@ _dispatch_main_q_port_init(void *ctxt DISPATCH_UNUSED)
 	_dispatch_safe_fork = false;
 }
 
-static void
-_dispatch_sigsuspend(void *ctxt DISPATCH_UNUSED)
-{
-	static const sigset_t mask = 0;
-
-	for (;;) {
-		sigsuspend(&mask);
-	}
-}
-
 void
 _dispatch_main_q_port_clean(void)
 {
-	// overload the "probably" variable to mean that dispatch_main() or
-	// similar non-POSIX API was called
-	// this has to run before the DISPATCH_COCOA_COMPAT below
-	if (_dispatch_program_is_probably_callback_driven) {
-		dispatch_async_f(_dispatch_get_root_queue(0, 0), NULL, _dispatch_sigsuspend);
-		sleep(1);	// workaround 6778970
-	}
-
 	dispatch_once_f(&_dispatch_main_q_port_pred, NULL, _dispatch_main_q_port_init);
 
 	mach_port_t mp = main_q_port;
@@ -166,13 +152,20 @@ _dispatch_get_main_queue_port_4CF(void)
 static void
 _dispatch_window_message_init(void *ctxt DISPATCH_UNUSED)
 {
-	_dispatch_thread_window_message = RegisterWindowMessageW(L"libdispatch");
+	_dispatch_thread_window_message = RegisterWindowMessageW(L"libdispatch-threadq");
+	_dispatch_main_window_message   = RegisterWindowMessageW(L"libdispatch-mainq");
 }
 
 UINT dispatch_get_thread_window_message(void)
 {
 	dispatch_once_f(&_dispatch_window_message_pred, NULL, _dispatch_window_message_init);
 	return _dispatch_thread_window_message;
+}
+
+UINT dispatch_get_main_window_message(void)
+{
+	dispatch_once_f(&_dispatch_window_message_pred, NULL, _dispatch_window_message_init);
+	return _dispatch_main_window_message;
 }
 
 #endif
@@ -199,8 +192,9 @@ _dispatch_queue_wakeup_main(void)
 	}
 
 	_dispatch_safe_fork = false;
+#else if TARGET_OS_WIN32
+	PostThreadMessage(GetThreadId(_pthread_get_native_handle(pthread_self())), dispatch_get_main_window_message(), 0, 0);
 #endif
-	// TODO decide on Win32 main thread semantics
 }
 
 DISPATCH_NOINLINE
@@ -224,10 +218,37 @@ _dispatch_queue_wakeup_manual(dispatch_queue_t q)
 	}
 }
 
+static void
+_dispatch_sigsuspend(void *ctxt DISPATCH_UNUSED)
+{
+	// not sure if this is really the right thing to do.
+	// after all, this workitem is placed in an aync queue,
+	// so all we're achieving is tying up a thread.
+#if TARGET_OS_WIN32
+	for (;;) {
+		Sleep(INFINITE);
+	}
+#else
+	static const sigset_t mask;
+
+	for (;;) {
+		sigsuspend(&mask);
+	}
+#endif
+}
+
 DISPATCH_NOINLINE
 void
 _dispatch_queue_cleanup_main(void)
 {
+	// overload the "probably" variable to mean that dispatch_main() or
+	// similar non-POSIX API was called
+	// this has to run before the DISPATCH_COCOA_COMPAT below
+	if (_dispatch_program_is_probably_callback_driven) {
+		dispatch_async_f(dispatch_get_global_queue(0, 0), NULL, _dispatch_sigsuspend);
+		sleep(1);	// workaround 6778970
+	}
+	
 #if DISPATCH_COCOA_COMPAT
 	_dispatch_main_q_port_clean();
 #endif
@@ -255,4 +276,10 @@ void
 dispatch_thread_queue_callback(void)
 {
 	_dispatch_manual_queue_drain(dispatch_get_current_thread_queue());
+}
+
+void
+dispatch_main_queue_callback(void)
+{
+	_dispatch_manual_queue_drain(dispatch_get_main_queue());
 }

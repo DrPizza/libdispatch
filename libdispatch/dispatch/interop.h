@@ -30,7 +30,9 @@ dispatch_queue_t dispatch_get_main_queue(void);
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 DISPATCH_EXPORT struct dispatch_queue_s _dispatch_main_q;
 
+#if !defined(_MSC_VER) // for reasons I don't understand, exporting this object doesn't work as well as it should.
 #define dispatch_get_main_queue() (&_dispatch_main_q)
+#endif
 
 /*!
  * @function dispatch_thread_queue_callback
@@ -43,12 +45,26 @@ DISPATCH_EXPORT DISPATCH_NOTHROW
 void
 dispatch_thread_queue_callback(void);
 
+/*!
+ * @function dispatch_main_queue_callback
+ * 
+ * @abstract
+ * External code calls dispatch_main_queue_callback() to drain blocks queued to the main queue.
+ *
+ */
+DISPATCH_EXPORT DISPATCH_NOTHROW
+void
+dispatch_main_queue_callback(void);
+
 #ifdef WIN32
 
 typedef unsigned int UINT;
 
 DISPATCH_EXPORT DISPATCH_NOTHROW
 UINT dispatch_get_thread_window_message(void);
+
+DISPATCH_EXPORT DISPATCH_NOTHROW
+UINT dispatch_get_main_window_message(void);
 
 #else
 #if HAVE_MACH
