@@ -38,10 +38,45 @@ void* _pthread_get_native_handle(pthread_t pt)
 	return pt->thread;
 }
 
+static void _pthread_destructors(void)
+{
+	pthread_items_t items = TlsGetValue(pthread_slot);
+	slot_destructor* local_destructors = calloc(slots_allocated, sizeof(slot_destructor));
+	long i;
+	int more_calls_needed;
+
+	EnterCriticalSection(&destructor_lock);
+	memcpy(local_destructors, destructors, slots_allocated * sizeof(slot_destructor));
+	LeaveCriticalSection(&destructor_lock);
+	do
+	{
+		for(i = 0; i < slots_allocated; ++i)
+		{
+			if(local_destructors[i] && items->items[i])
+			{
+				void* value = items->items[i];
+				items->items[i] = NULL;
+				local_destructors[i](value);
+			}
+		}
+		more_calls_needed = 0;
+		for(i = 0; i < slots_allocated; ++i)
+		{
+			if(items->items[i])
+			{
+				more_calls_needed = 1;
+			}
+		}
+	}
+	while(more_calls_needed);
+	free(local_destructors);
+}
+
 void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 {
 	UNREFERENCED_PARAMETER(dll);
 	UNREFERENCED_PARAMETER(reserved);
+
 	switch(reason)
 	{
 	case DLL_PROCESS_ATTACH:
@@ -62,43 +97,13 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 	case DLL_THREAD_DETACH:
 		{
 			pthread_items_t items = TlsGetValue(pthread_slot);
-			slot_destructor* local_destructors = calloc(slots_allocated, sizeof(slot_destructor));
-			long i;
-			int more_calls_needed;
-
-			EnterCriticalSection(&destructor_lock);
-			memcpy(local_destructors, destructors, slots_allocated * sizeof(slot_destructor));
-			LeaveCriticalSection(&destructor_lock);
-			do
-			{
-				for(i = 0; i < slots_allocated; ++i)
-				{
-					if(local_destructors[i] && items->items[i])
-					{
-						void* value = items->items[i];
-						items->items[i] = NULL;
-						local_destructors[i](value);
-					}
-				}
-				more_calls_needed = 0;
-				for(i = 0; i < slots_allocated; ++i)
-				{
-					if(items->items[i])
-					{
-						more_calls_needed = 1;
-					}
-				}
-			}
-			while(more_calls_needed);
-			free(local_destructors);
-
+			_pthread_destructors();
 			if(items->current_thread->thread == INVALID_HANDLE_VALUE)
 			{
 				free(items->current_thread);
 			}
 			free(items);
 			TlsSetValue(pthread_slot, NULL);
-
 			if(reason == DLL_PROCESS_DETACH)
 			{
 				free(destructors);
@@ -111,10 +116,12 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
-#pragma comment (linker, "/INCLUDE:__xl_b")
+//#pragma comment (linker, "/INCLUDE:__xl_e")
+#pragma comment (linker, "/INCLUDE:pthread_tls_callback")
 #else
 #pragma comment (linker, "/INCLUDE:_tls_used")
-#pragma comment (linker, "/INCLUDE:_xl_b")
+//#pragma comment (linker, "/INCLUDE:_xl_e")
+#pragma comment (linker, "/INCLUDE:pthread_tls_callback")
 #endif
 
 #ifdef _M_X64
@@ -125,7 +132,7 @@ EXTERN_C const
 EXTERN_C
 #endif
 
-PIMAGE_TLS_CALLBACK _xl_b = pthread_tls_init;
+PIMAGE_TLS_CALLBACK pthread_tls_callback = pthread_tls_init;
 
 #ifdef _M_X64
 #pragma const_seg()
@@ -264,6 +271,10 @@ int pthread_join(pthread_t thread, void** thread_return)
 void pthread_exit(void* status)
 {
 	pthread_self()->result = status;
+	// HACKHACK Windows is not at all happy at making API calls during thread teardown.
+	// with many APIs claiming "0xC000000D: An invalid parameter was passed to a service or function."
+	// so I have to call these early.
+	_pthread_destructors();
 	ExitThread(0);
 }
 
