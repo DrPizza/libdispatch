@@ -15,7 +15,7 @@ namespace gcd
 		template<typename T>
 		struct counted_pointer
 		{
-			counted_pointer(T* obj_, LONG count_) : obj(obj_), count(count_)
+			counted_pointer(T* obj_, ptrdiff_t count_) : obj(obj_), count(count_)
 			{
 			}
 
@@ -295,7 +295,7 @@ namespace gcd
 
 	void queue::apply(size_t iterations, counted_function_t work)
 	{
-		apply(iterations, new counted_pointer<counted_function_t>(new counted_function_t(work), static_cast<LONG>(iterations)), &dispatch_counted_function_object);
+		apply(iterations, new counted_pointer<counted_function_t>(new counted_function_t(work), static_cast<ptrdiff_t>(iterations)), &dispatch_counted_function_object);
 	}
 
 	void queue::async(void* context, ::dispatch_function_t work)
