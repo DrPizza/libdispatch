@@ -170,6 +170,12 @@
     <ClInclude Include="dispatch\atomic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\continuation_cache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\shims\tsd.c">
@@ -236,6 +242,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\interop.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\continuation_cache.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\debug.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

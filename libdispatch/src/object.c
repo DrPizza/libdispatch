@@ -95,13 +95,15 @@ dispatch_release(dispatch_object_t dou)
 	}
 	if (oldval == 1) {
 		if ((uintptr_t)obj->do_vtable == (uintptr_t)&_dispatch_source_kevent_vtable) {
-			return _dispatch_source_xref_release((dispatch_source_t)obj);
+			_dispatch_source_xref_release((dispatch_source_t)obj);
+			return;
 		}
 		if (slowpath(DISPATCH_OBJECT_SUSPENDED(obj))) {
 			// Arguments for and against this assert are within 6705399
 			DISPATCH_CLIENT_CRASH("Release of a suspended object");
 		}
-		return _dispatch_release(as_do(obj));
+		_dispatch_release(as_do(obj));
+		return;
 	}
 	DISPATCH_CLIENT_CRASH("Over-release of an object");
 }
@@ -148,8 +150,8 @@ _dispatch_release(dispatch_object_t dou)
 		if (obj->do_xref_cnt) {
 			DISPATCH_CRASH("release while external references exist");
 		}
-
-		return dx_dispose(obj);
+		dx_dispose(obj);
+		return;
 	}
 	DISPATCH_CRASH("over-release");
 }

@@ -38,7 +38,7 @@ struct dispatch_semaphore_s {
 	DISPATCH_STRUCT_HEADER(dispatch_semaphore_s, dispatch_semaphore_vtable_s);
 	intptr_t dsema_value;
 	intptr_t dsema_orig;
-	size_t dsema_sent_ksignals;
+	intptr_t dsema_sent_ksignals;
 #if (USE_MACH_SEM + USE_POSIX_SEM + USE_WIN32_SEM) > 1
 #error "Too many supported semaphore types"
 #elif USE_MACH_SEM
@@ -52,7 +52,7 @@ struct dispatch_semaphore_s {
 #else
 #error "No supported semaphore type"
 #endif
-	size_t dsema_group_waiters;
+	intptr_t dsema_group_waiters;
 	struct dispatch_sema_notify_s *dsema_notify_head;
 	struct dispatch_sema_notify_s *dsema_notify_tail;
 };

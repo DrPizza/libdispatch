@@ -38,6 +38,9 @@ void _test_long(const char* file, long line, const char* desc, long actual, long
 void _test_long_less_than(const char* file, long line, const char* desc, long actual, long max_expected);
 #define test_long_less_than(a,b,c) _test_long_less_than(__FILE__, __LINE__, a, b, c)
 
+void _test_time_less_than(const char* file, long line, const char* desc, dispatch_time_t actual, dispatch_time_t max_expected);
+#define test_time_less_than(a,b,c) _test_time_less_than(__FILE__, __LINE__, a, b, c)
+
 void _test_double_less_than_or_equal(const char* file, long line, const char* desc, double val, double max_expected);
 #define test_double_less_than_or_equal(d, v, m) _test_double_less_than(__FILE__, __LINE__, d, v, m)
 

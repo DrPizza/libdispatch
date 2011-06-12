@@ -86,6 +86,12 @@ _test_long_less_than(const char* file, long line, const char* desc, long actual,
 	_test_print(file, line, desc, (actual < expected_max), "%ld", actual, "<%ld", expected_max);
 }
 
+#define test_time_less_than(a, b, c) _test_time_less_than(__FILE__, __LINE__, a, b, c)
+void
+_test_time_less_than(const char* file, long line, const char* desc, dispatch_time_t actual, dispatch_time_t expected_max) {
+	_test_print(file, line, desc, (actual < expected_max), "%I64u", actual, "<%I64u", expected_max);
+}
+
 #define test_double_less_than(d, v, m) _test_double_less_than(__FILE__, __LINE__, d, v, m)
 void
 _test_double_less_than(const char* file, long line, const char* desc, double val, double max_expected) {
@@ -113,7 +119,7 @@ _test_errno(const char* file, long line, const char* desc, long actual, long exp
 
 //#include <spawn.h>
 
-extern char **environ;
+//extern char **environ;
 
 void
 test_stop(void) {

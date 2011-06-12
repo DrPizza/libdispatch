@@ -56,6 +56,10 @@ static uint64_t start;
 
 static void do_test(void);
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4098) // warning C4098: '%s' : 'void' function returning a value
+#endif
 static void
 collect(void *context)
 {
@@ -68,7 +72,8 @@ collect(void *context)
 	}
 
 	delta = _dispatch_absolute_time() - start;
-	math = delta = _dispatch_time_mach2nano(delta);
+	delta = _dispatch_time_mach2nano(delta);
+	math = (long double)delta;
 	math /= COUNT * COUNT * 2ul + COUNT * 2ul;
 
 	printf("lap: %ld\n", lap_count_down);
@@ -96,6 +101,9 @@ collect(void *context)
 	// decided to kill us.
 	dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), NULL, test_stop_after_delay);
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 static void
 pong(void *context)

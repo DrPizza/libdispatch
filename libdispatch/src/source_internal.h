@@ -55,7 +55,7 @@ struct dispatch_set_timer_params {
 	struct dispatch_timer_source_s values;
 };
 
-#define DSF_CANCELED 1u // cancellation has been requested
+#define DSF_CANCELED 1 // cancellation has been requested
 
 struct dispatch_source_s {
 	DISPATCH_STRUCT_HEADER(dispatch_source_s, dispatch_source_vtable_s);
@@ -82,7 +82,7 @@ struct dispatch_source_s {
 			ds_cancel_is_block:1,
 			ds_handler_is_block:1;
 
-			uintptr_t ds_atomic_flags;
+			intptr_t ds_atomic_flags;
 
 			uintptr_t ds_data;
 			uintptr_t ds_pending_data;

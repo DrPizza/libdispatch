@@ -36,7 +36,7 @@ union {
 	char padding[64];
 } indices[BLOCKS];
 
-size_t iterations = QUEUES * BLOCKS * 0.25;
+size_t iterations = (size_t)(QUEUES * BLOCKS * 0.25);
 
 void
 histogram(void) {

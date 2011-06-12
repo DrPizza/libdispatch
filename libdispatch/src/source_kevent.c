@@ -285,7 +285,7 @@ _dispatch_source_kevent_resume(dispatch_source_t ds, uint32_t new_flags, uint32_
 
 #ifndef DISPATCH_NO_LEGACY
 static void
-_dispatch_kevent_debugger2(void *context, dispatch_source_t DISPATCH_UNUSED)
+_dispatch_kevent_debugger2(void *context, dispatch_source_t unused DISPATCH_UNUSED)
 {
 	struct sockaddr sa;
 	socklen_t sa_len = sizeof(sa);
@@ -535,6 +535,9 @@ _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke)
 			ke = &fake;
 		} else {
 			// log the unexpected error
+#if defined (__GNUC__)
+			(void)
+#endif
 			dispatch_assume_zero(ke->data);
 			return;
 		}
@@ -545,11 +548,12 @@ _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke)
 		// zero bytes happens when EV_EOF is set
 		// 10A268 does not fail this assert with EVFILT_READ and a 10 GB file
 		dispatch_assert(ke->data >= 0l);
+		// flipping the bits ensures that we still pass the test at source.c:142 when zero bytes pending
 		ds->ds_pending_data = ~ke->data;
 	} else if (ds->ds_is_adder) {
-		dispatch_atomic_add(&ds->ds_pending_data, ke->data);
+		dispatch_atomic_add((intptr_t*)&ds->ds_pending_data, ke->data);
 	} else {
-		dispatch_atomic_or(&ds->ds_pending_data, ke->fflags & ds->ds_pending_data_mask);
+		dispatch_atomic_or((intptr_t*)&ds->ds_pending_data, ke->fflags & ds->ds_pending_data_mask);
 	}
 
 	// EV_DISPATCH and EV_ONESHOT sources are no longer armed after delivery
@@ -908,12 +912,12 @@ _dispatch_run_timers2(unsigned int timer)
 		}
 
 		if ((ds->ds_timer.flags & DISPATCH_TIMER_TYPE_MASK) == DISPATCH_TIMER_ONESHOT) {
-			dispatch_atomic_inc(&ds->ds_pending_data);
+			dispatch_atomic_inc((intptr_t*)&ds->ds_pending_data);
 			ds->ds_timer.target = 0;
 		} else {
 			// Calculate number of missed intervals.
 			missed = (now - ds->ds_timer.target) / ds->ds_timer.interval;
-			dispatch_atomic_add(&ds->ds_pending_data, missed + 1);
+			dispatch_atomic_add((intptr_t*)&ds->ds_pending_data, missed + 1);
 			ds->ds_timer.target += (missed + 1) * ds->ds_timer.interval;
 		}
 

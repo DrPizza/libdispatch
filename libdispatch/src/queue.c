@@ -23,6 +23,10 @@
 #include "protocol.h"
 #endif
 
+#if defined(_MSC_VER)
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
 static dispatch_once_t _dispatch_root_queues_pred;
 static void _dispatch_root_queues_init(void *);
 
@@ -160,10 +164,6 @@ static void _dispatch_queue_invoke(dispatch_queue_t dq);
 static bool _dispatch_queue_wakeup_global(dispatch_queue_t dq);
 static struct dispatch_object_s *_dispatch_queue_concurrent_drain_one(dispatch_queue_t dq);
 
-bool _dispatch_program_is_probably_callback_driven;
-
-static void _dispatch_cache_cleanup2(void *value);
-
 const struct dispatch_queue_vtable_s _dispatch_queue_vtable = {
 	/*.do_type    = */	DISPATCH_QUEUE_TYPE,
 	/*.do_kind    = */	"queue",
@@ -188,44 +188,56 @@ struct dispatch_root_queue_context_s {
 #if HAVE_PTHREAD_WORKQUEUES
 	pthread_workqueue_t dgq_kworkqueue;
 #endif
-	uintptr_t dgq_pending;
-	uintptr_t dgq_thread_pool_size;
+	intptr_t dgq_pending;
+	intptr_t dgq_thread_pool_size;
 	dispatch_semaphore_t dgq_thread_mediator;
 };
 
 static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	{
+#if HAVE_PTHREAD_WORKQUEUES
 		/*.dgq_kworkqueue       = */	0,
+#endif
 		/*.dgq_pending          = */	0,
 		/*.dgq_thread_pool_size = */	MAX_THREAD_COUNT,
 		/*.dgq_thread_mediator  = */	&_dispatch_thread_mediator[0],
 	},
 	{
+#if HAVE_PTHREAD_WORKQUEUES
 		/*.dgq_kworkqueue       = */	0,
+#endif
 		/*.dgq_pending          = */	0,
 		/*.dgq_thread_pool_size = */	MAX_THREAD_COUNT,
 		/*.dgq_thread_mediator  = */	&_dispatch_thread_mediator[1],
 	},
 	{
+#if HAVE_PTHREAD_WORKQUEUES
 		/*.dgq_kworkqueue       = */	0,
+#endif
 		/*.dgq_pending          = */	0,
 		/*.dgq_thread_pool_size = */	MAX_THREAD_COUNT,
 		/*.dgq_thread_mediator  = */	&_dispatch_thread_mediator[2],
 	},
 	{
+#if HAVE_PTHREAD_WORKQUEUES
 		/*.dgq_kworkqueue       = */	0,
+#endif
 		/*.dgq_pending          = */	0,
 		/*.dgq_thread_pool_size = */	MAX_THREAD_COUNT,
 		/*.dgq_thread_mediator  = */	&_dispatch_thread_mediator[3],
 	},
 	{
+#if HAVE_PTHREAD_WORKQUEUES
 		/*.dgq_kworkqueue       = */	0,
+#endif
 		/*.dgq_pending          = */	0,
 		/*.dgq_thread_pool_size = */	MAX_THREAD_COUNT,
 		/*.dgq_thread_mediator  = */	&_dispatch_thread_mediator[4],
 	},
 	{
+#if HAVE_PTHREAD_WORKQUEUES
 		/*.dgq_kworkqueue       = */	0,
+#endif
 		/*.dgq_pending          = */	0,
 		/*.dgq_thread_pool_size = */	MAX_THREAD_COUNT,
 		/*.dgq_thread_mediator  = */	&_dispatch_thread_mediator[5],
@@ -382,7 +394,8 @@ _dispatch_continuation_pop(dispatch_object_t dou)
 	dispatch_group_t dg;
 
 	if (DISPATCH_OBJ_IS_VTABLE(dou._do)) {
-		return _dispatch_queue_invoke(dou._dq);
+		_dispatch_queue_invoke(dou._dq);
+		return;
 	}
 
 	// Add the item back to the cache before calling the function. This
@@ -418,6 +431,9 @@ _dispatch_queue_concurrent_drain_one(dispatch_queue_t dq)
 		// The first xchg on the tail will tell the enqueueing thread that it
 		// is safe to blindly write out to the head pointer. A cmpxchg honors
 		// the algorithm.
+#ifdef __GNUC__
+		(void)
+#endif
 		dispatch_atomic_cmpxchg_pointer(&dq->dq_items_head, mediator, NULL);
 		_dispatch_debug("no work on global work queue");
 		return NULL;
@@ -465,8 +481,8 @@ out:
 dispatch_queue_t
 dispatch_get_current_queue(void)
 {
-	dispatch_queue_t cur =  _dispatch_queue_get_current();
-	return cur ? cur : _dispatch_get_root_queue(0, true);
+	dispatch_queue_t q = _dispatch_queue_get_current();
+	return q ? q : _dispatch_get_root_queue(0, true);
 }
 
 struct _dispatch_hw_config_s _dispatch_hw_config;
@@ -481,17 +497,17 @@ _dispatch_queue_set_width_init(void)
 	ret = sysctlbyname("hw.activecpu", &_dispatch_hw_config.cc_max_active,
 	    &valsz, NULL, 0);
 	(void)dispatch_assume_zero(ret);
-	dispatch_assume(valsz == sizeof(uint32_t));
+	(void)dispatch_assume(valsz == sizeof(uint32_t));
 
 	ret = sysctlbyname("hw.logicalcpu_max",
 	    &_dispatch_hw_config.cc_max_logical, &valsz, NULL, 0);
 	(void)dispatch_assume_zero(ret);
-	dispatch_assume(valsz == sizeof(uint32_t));
+	(void)dispatch_assume(valsz == sizeof(uint32_t));
 
 	ret = sysctlbyname("hw.physicalcpu_max",
 	    &_dispatch_hw_config.cc_max_physical, &valsz, NULL, 0);
 	(void)dispatch_assume_zero(ret);
-	dispatch_assume(valsz == sizeof(uint32_t));
+	(void)dispatch_assume(valsz == sizeof(uint32_t));
 #elif defined(__FreeBSD__)
 	size_t valsz = sizeof(uint32_t);
 	int ret;
@@ -505,12 +521,12 @@ _dispatch_queue_set_width_init(void)
 	    _dispatch_hw_config.cc_max_physical =
 	    _dispatch_hw_config.cc_max_active;
 #elif HAVE_SYSCONF && defined(_SC_NPROCESSORS_ONLN)
-	_dispatch_hw_config.cc_max_active = (int)sysconf(_SC_NPROCESSORS_ONLN);
-	if (_dispatch_hw_config.cc_max_active < 0)
-		_dispatch_hw_config.cc_max_active = 1;
+	int ret;
+
+	ret = sysconf(_SC_NPROCESSORS_ONLN);
 	_dispatch_hw_config.cc_max_logical =
 	    _dispatch_hw_config.cc_max_physical =
-	    _dispatch_hw_config.cc_max_active;
+	    _dispatch_hw_config.cc_max_active = (ret < 0) ? 1 : ret;
 #elif TARGET_OS_WIN32
 	_dispatch_hw_config.cc_max_logical = (uint32_t)GetMaximumProcessorCount(ALL_PROCESSOR_GROUPS);
 	_dispatch_hw_config.cc_max_physical = (uint32_t)GetMaximumProcessorCount(ALL_PROCESSOR_GROUPS);
@@ -563,7 +579,7 @@ dispatch_queue_set_width(dispatch_queue_t dq, long width)
 // 3 - _unused_
 // 4,5,6,7,8,9 - global queues
 // we use 'xadd' on Intel, so the initial value == next assigned
-static uintptr_t _dispatch_queue_serial_numbers = 10;
+static intptr_t _dispatch_queue_serial_numbers = 10;
 
 // Note to later developers: ensure that any initialization changes are
 // made for statically allocated queues (i.e. _dispatch_main_q).
@@ -614,7 +630,7 @@ dispatch_queue_create(const char *label, dispatch_queue_attr_t attr)
 #ifdef __BLOCKS__
 		if (attr->finalizer_func == (void*)_dispatch_call_block_and_release2) {
 			// if finalizer_ctxt is a Block, retain it.
- 			dq->dq_finalizer_ctxt = Block_copy(dq->dq_finalizer_ctxt);
+			dq->dq_finalizer_ctxt = Block_copy(dq->dq_finalizer_ctxt);
 			if (!(dq->dq_finalizer_ctxt)) {
 				goto out_bad;
 			}
@@ -629,9 +645,9 @@ dispatch_queue_create(const char *label, dispatch_queue_attr_t attr)
 
 #if !defined(DISPATCH_NO_LEGACY) && defined(__BLOCKS__)
 out_bad:
-#endif
 	free(dq);
 	return NULL;
+#endif
 }
 
 // 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
@@ -701,7 +717,8 @@ dispatch_barrier_async_f(dispatch_queue_t dq, void *context, dispatch_function_t
 	dispatch_continuation_t dc = fastpath(_dispatch_continuation_alloc_cacheonly());
 
 	if (!dc) {
-		return _dispatch_barrier_async_f_slow(dq, context, func);
+		_dispatch_barrier_async_f_slow(dq, context, func);
+		return;
 	}
 
 	dc->do_vtable = (void *)(uintptr_t)(DISPATCH_OBJ_ASYNC_BIT | DISPATCH_OBJ_BARRIER_BIT);
@@ -742,7 +759,8 @@ dispatch_async_f(dispatch_queue_t dq, void *ctxt, dispatch_function_t func)
 	// the "drain" function will do this test
 
 	if (!dc) {
-		return _dispatch_async_f_slow(dq, ctxt, func);
+		_dispatch_async_f_slow(dq, ctxt, func);
+		return;
 	}
 
 	dc->do_vtable = (void *)(uintptr_t)DISPATCH_OBJ_ASYNC_BIT;
@@ -841,7 +859,8 @@ dispatch_barrier_sync_f(dispatch_queue_t dq, void *ctxt, dispatch_function_t fun
 	if (slowpath(dq->dq_items_tail)
 			|| slowpath(DISPATCH_OBJECT_SUSPENDED(dq))
 			|| slowpath(!_dispatch_queue_trylock(dq))) {
-		return _dispatch_barrier_sync_f_slow(dq, ctxt, func);
+		_dispatch_barrier_sync_f_slow(dq, ctxt, func);
+		return;
 	}
 
 	_dispatch_thread_setspecific(dispatch_queue_key, dq);
@@ -904,7 +923,8 @@ dispatch_sync_f(dispatch_queue_t dq, void *ctxt, dispatch_function_t func)
 	dispatch_queue_t old_dq;
 
 	if (dq->dq_width == 1) {
-		return dispatch_barrier_sync_f(dq, ctxt, func);
+		dispatch_barrier_sync_f(dq, ctxt, func);
+		return;
 	}
 
 	// 1) ensure that this thread hasn't enqueued anything ahead of this call
@@ -969,7 +989,8 @@ static void
 _dispatch_queue_cleanup(void *ctxt)
 {
 	if(((dispatch_queue_t)ctxt)->dq_manually_drained) {
-		return _dispatch_queue_cleanup2(ctxt);
+		_dispatch_queue_cleanup2(ctxt);
+		return;
 	}
 	// POSIX defines that destructors are only called if 'ctxt' is non-null
 	DISPATCH_CRASH("Premature thread exit while a dispatch queue is running");
@@ -1038,7 +1059,7 @@ void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
 //#pragma comment (linker, "/INCLUDE:__xl_e")
-#pragma comment (linker, "/INCLUDE:dispatch_tls_callback")
+#pragma comment (linker, "/INCLUDE:_dispatch_tls_callback")
 #else
 #pragma comment (linker, "/INCLUDE:_tls_used")
 //#pragma comment (linker, "/INCLUDE:_xl_e")
@@ -1189,6 +1210,9 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 
 #if HAVE_PTHREAD_WORKQUEUES
 	r = pthread_workqueue_attr_init_np(&pwq_attr);
+#if defined(__GNUC__)
+	(void)
+#endif
 	dispatch_assume_zero(r);
 #endif
 
@@ -1201,14 +1225,23 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 #endif
 #if HAVE_PTHREAD_WORKQUEUES
 		r = pthread_workqueue_attr_setqueuepriority_np(&pwq_attr, _dispatch_rootq2wq_pri(i));
+#if defined(__GNUC__)
+		(void)
+#endif
 		dispatch_assume_zero(r);
 #if !TARGET_OS_WIN32
 		r = pthread_workqueue_attr_setovercommit_np(&pwq_attr, i & 1);
+#if defined(__GNUC__)
+		(void)
+#endif
 		dispatch_assume_zero(r);
 #endif
 		r = 0;
 		if (disable_wq || (r = pthread_workqueue_create_np(&_dispatch_root_queue_contexts[i].dgq_kworkqueue, &pwq_attr))) {
 			if (r != ENOTSUP) {
+#if defined(__GNUC__)
+				(void)
+#endif
 				dispatch_assume_zero(r);
 			}
 #endif /* HAVE_PTHREAD_WORKQUEUES */
@@ -1217,12 +1250,12 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 			kr = semaphore_create(mach_task_self(), &_dispatch_thread_mediator[i].dsema_port, SYNC_POLICY_LIFO, 0);
 			DISPATCH_VERIFY_MIG(kr);
 			(void)dispatch_assume_zero(kr);
-			dispatch_assume(_dispatch_thread_mediator[i].dsema_port);
+			(void)dispatch_assume(_dispatch_thread_mediator[i].dsema_port);
 #endif
 #if USE_POSIX_SEM
 			/* XXXRW: POSIX semaphores don't support LIFO? */
 			ret = sem_init(&_dispatch_thread_mediator[i].dsema_sem, 0, 0);
-			dispatch_assume_zero(ret);
+			(void)dispatch_assume_zero(ret);
 #endif
 #if USE_WIN32_SEM
 			_dispatch_thread_mediator[i].dsema_handle = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
@@ -1230,6 +1263,9 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 #endif
 #if HAVE_PTHREAD_WORKQUEUES
 		} else {
+#if defined(__GNUC__)
+			(void)
+#endif
 			dispatch_assume(_dispatch_root_queue_contexts[i].dgq_kworkqueue);
 		}
 #endif
@@ -1237,6 +1273,9 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 
 #if HAVE_PTHREAD_WORKQUEUES
 	r = pthread_workqueue_attr_destroy_np(&pwq_attr);
+#if defined(__GNUC__)
+	(void)
+#endif
 	dispatch_assume_zero(r);
 #endif
 }
@@ -1261,11 +1300,7 @@ _dispatch_queue_wakeup_global(dispatch_queue_t dq)
 
 	_dispatch_safe_fork = false;
 
-#ifdef __GNUC__
 	dispatch_debug_queue(dq, __PRETTY_FUNCTION__);
-#elif defined _MSC_VER
-	dispatch_debug_queue(dq, __FUNCTION__);
-#endif
 
 	dispatch_once_f(&_dispatch_root_queues_pred, NULL, _dispatch_root_queues_init);
 
@@ -1277,6 +1312,9 @@ _dispatch_queue_wakeup_global(dispatch_queue_t dq)
 			r = pthread_workqueue_additem_np(qc->dgq_kworkqueue, _dispatch_worker_thread2, dq, &wh);
 #else
 			r = pthread_workqueue_additem_np(qc->dgq_kworkqueue, _dispatch_worker_thread2, dq, &wh, &gen_cnt);
+#endif
+#if defined(__GNUC__)
+			(void)
 #endif
 			dispatch_assume_zero(r);
 		} else {
@@ -1300,11 +1338,17 @@ _dispatch_queue_wakeup_global(dispatch_queue_t dq)
 
 	while ((r = pthread_create(&pthr, NULL, _dispatch_worker_thread, dq))) {
 		if (r != EAGAIN) {
+#if defined(__GNUC__)
+			(void)
+#endif
 			dispatch_assume_zero(r);
 		}
 		sleep(1);
 	}
 	r = pthread_detach(pthr);
+#if defined(__GNUC__)
+	(void)
+#endif
 	dispatch_assume_zero(r);
 
 out:
@@ -1342,7 +1386,8 @@ _dispatch_queue_invoke(dispatch_queue_t dq)
 		// When the suspend-count lock is dropped, then the check will happen.
 		dispatch_atomic_dec(&dq->dq_running);
 		if (tq) {
-			return _dispatch_queue_push(tq, as_do(dq));
+			_dispatch_queue_push(tq, as_do(dq));
+			return;
 		}
 	}
 
@@ -1403,7 +1448,8 @@ _dispatch_async_f_redirect(dispatch_queue_t dq, struct dispatch_object_s *other_
 	dispatch_queue_t root_dq = dq;
 
 	if (dc->dc_func == _dispatch_sync_f_slow2) {
-		return dc->dc_func(dc->dc_ctxt);
+		dc->dc_func(dc->dc_ctxt);
+		return;
 	}
 
 	dispatch_atomic_add(&dq->dq_running, 2);
@@ -1424,7 +1470,6 @@ _dispatch_async_f_redirect(dispatch_queue_t dq, struct dispatch_object_s *other_
 
 	_dispatch_queue_push(root_dq, as_do(dc));
 }
-
 
 void
 _dispatch_queue_drain(dispatch_queue_t dq)
@@ -1505,9 +1550,9 @@ _dispatch_worker_thread(void *context)
 
 	// workaround tweaks the kernel workqueue does for us
 	r = sigfillset(&mask);
-	dispatch_assume_zero(r);
+	(void)dispatch_assume_zero(r);
 	r = _dispatch_pthread_sigmask(SIG_BLOCK, &mask, NULL);
-	dispatch_assume_zero(r);
+	(void)dispatch_assume_zero(r);
 #endif
 
 	do {
@@ -1515,7 +1560,7 @@ _dispatch_worker_thread(void *context)
 		// we use 65 seconds in case there are any timers that run once a minute
 	} while (dispatch_semaphore_wait(qc->dgq_thread_mediator, dispatch_time(0, 65ull * NSEC_PER_SEC)) == 0);
 
-	dispatch_atomic_inc(&qc->dgq_thread_pool_size);
+	dispatch_atomic_inc(&(qc->dgq_thread_pool_size));
 	if (dq->dq_items_tail) {
 		_dispatch_queue_wakeup_global(dq);
 	}
@@ -1713,139 +1758,6 @@ dispatch_queue_attr_set_finalizer(dispatch_queue_attr_t attr,
 #endif
 #endif /* DISPATCH_NO_LEGACY */
 
-static void
-_dispatch_ccache_init(void *context DISPATCH_UNUSED)
-{
-	_dispatch_ccache_zone = malloc_create_zone(0, 0);
-	dispatch_assert(_dispatch_ccache_zone);
-	malloc_set_zone_name(_dispatch_ccache_zone, "DispatchContinuations");
-}
-
-dispatch_continuation_t
-_dispatch_continuation_alloc_from_heap(void)
-{
-	static dispatch_once_t pred;
-	dispatch_continuation_t dc;
-
-	dispatch_once_f(&pred, NULL, _dispatch_ccache_init);
-
-	while (!(dc = fastpath(malloc_zone_calloc(_dispatch_ccache_zone, 1, ROUND_UP_TO_CACHELINE_SIZE(sizeof(*dc)))))) {
-		sleep(1);
-	}
-
-	return dc;
-}
-
-void
-_dispatch_force_cache_cleanup(void)
-{
-	dispatch_continuation_t dc = _dispatch_thread_getspecific(dispatch_cache_key);
-	if (dc) {
-		_dispatch_thread_setspecific(dispatch_cache_key, NULL);
-		_dispatch_cache_cleanup2(dc);
-	}
-}
-
-DISPATCH_NOINLINE
-void
-_dispatch_cache_cleanup2(void *value)
-{
-	dispatch_continuation_t dc, next_dc = value;
-
-	while ((dc = next_dc)) {
-		next_dc = dc->do_next;
-		malloc_zone_free(_dispatch_ccache_zone, dc);
-	}
-}
-
-static char _dispatch_build[16];
-
-/*
- * XXXRW: What to do here for !Mac OS X?
- */
-static void
-_dispatch_bug_init(void *context DISPATCH_UNUSED)
-{
-#ifdef __APPLE__
-	int mib[] = { CTL_KERN, KERN_OSVERSION };
-	size_t bufsz = sizeof(_dispatch_build);
-
-	sysctl(mib, 2, _dispatch_build, &bufsz, NULL, 0);
-#else
-	memset(_dispatch_build, 0, sizeof(_dispatch_build));
-#endif
-}
-
-void
-_dispatch_bug(size_t line, long val)
-{
-	static dispatch_once_t pred;
-	static void *last_seen;
-	void *ra = __builtin_return_address(0);
-
-	dispatch_once_f(&pred, NULL, _dispatch_bug_init);
-	if (last_seen != ra) {
-		last_seen = ra;
-		_dispatch_log("BUG in libdispatch: %s - %lu - 0x%lx", _dispatch_build, (unsigned long)line, val);
-#if TARGET_OS_WIN32 && defined(_DEBUG)
-		DebugBreak();
-#endif
-	}
-}
-
-void
-_dispatch_abort(size_t line, long val)
-{
-	_dispatch_bug(line, val);
-	abort();
-}
-
-void
-_dispatch_log(const char *msg, ...)
-{
-	va_list ap;
-
-	va_start(ap, msg);
-
-	_dispatch_logv(msg, ap);
-
-	va_end(ap);
-}
-
-void
-_dispatch_logv(const char *msg, va_list ap)
-{
-#if TARGET_OS_WIN32
-	char message[256];
-	vsnprintf(message, sizeof(message) / sizeof(*message), msg, ap);
-	OutputDebugStringA(message);
-#elif DISPATCH_DEBUG
-	static FILE *logfile, *tmp;
-	char* newbuf = calloc(strlen(msg) + 2, 1);
-	char path[256];
-
-	sprintf(newbuf, "%s\n", msg);
-
-	if (!logfile) {
-		snprintf(path, sizeof(path), "/var/tmp/libdispatch.%d.log", getpid());
-		tmp = fopen(path, "a");
-		assert(tmp);
-		if (!dispatch_atomic_cmpxchg(&logfile, NULL, tmp)) {
-			fclose(tmp);
-		} else {
-			struct timeval tv;
-			gettimeofday(&tv, NULL);
-			fprintf(logfile, "=== log file opened for %s[%u] at %ld.%06u ===\n", getprogname() ? getprogname() : "", getpid(), tv.tv_sec, tv.tv_usec);
-		}
-	}
-	vfprintf(logfile, newbuf, ap);
-	fflush(logfile);
-	free(newbuf);
-#else
-	vsyslog(LOG_NOTICE, msg, ap);
-#endif
-}
-
 #if !TARGET_OS_WIN32
 
 int
@@ -1995,7 +1907,8 @@ dispatch_after_f(dispatch_time_t when, dispatch_queue_t queue, void *ctxt, void 
 
 	delta = _dispatch_timeout(when);
 	if (delta == 0) {
-		return dispatch_async_f(queue, ctxt, func);
+		dispatch_async_f(queue, ctxt, func);
+		return;
 	}
 
 	// this function should be optimized to not use a dispatch source

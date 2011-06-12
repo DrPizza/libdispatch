@@ -90,7 +90,7 @@ namespace gcd
 		source(::dispatch_source_type_t type, uintptr_t handle, unsigned long mask, queue& queue);
 		long test_cancel();
 		void cancel();
-		unsigned long get_data();
+		uintptr_t get_data();
 		uintptr_t get_handle();
 		uintptr_t get_mask();
 		void merge_data(unsigned long value);

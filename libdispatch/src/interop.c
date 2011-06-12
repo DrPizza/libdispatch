@@ -16,6 +16,8 @@ static UINT _dispatch_main_window_message;
 static UINT _dispatch_thread_window_message;
 #endif
 
+static bool _dispatch_program_is_probably_callback_driven;
+
 // 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
 struct dispatch_queue_s _dispatch_main_q = {
 	/*.do_vtable               = */	&_dispatch_queue_vtable,

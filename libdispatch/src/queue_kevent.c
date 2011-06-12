@@ -94,6 +94,10 @@ _dispatch_mgr_thread2(struct kevent *kev, size_t cnt)
 	}
 }
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4702) // warning C4702: unreachable code
+#endif
 static dispatch_queue_t
 _dispatch_mgr_invoke(dispatch_queue_t dq)
 {
@@ -110,7 +114,7 @@ _dispatch_mgr_invoke(dispatch_queue_t dq)
 		_dispatch_run_timers();
 
 		if(NULL != _dispatch_get_next_timer_fire(&ts)) {
-			timeout = (ts.tv_sec * 1000) + (ts.tv_nsec / NSEC_PER_MSEC);
+			timeout = (DWORD)(ts.tv_sec * 1000) + (DWORD)((unsigned __int64)(ts.tv_nsec) / NSEC_PER_MSEC);
 		} else {
 			timeout = INFINITE;
 		}
@@ -234,6 +238,9 @@ _dispatch_mgr_invoke(dispatch_queue_t dq)
 
 	return NULL;
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 static bool
 _dispatch_mgr_wakeup(dispatch_queue_t dq)
@@ -288,6 +295,8 @@ _dispatch_update_kq(const struct kevent *kev)
 	}
 #else
 	struct kevent kev_copy = *kev;
+	int rval = 0;
+	
 	kev_copy.flags |= EV_RECEIPT;
 
 	if (kev_copy.flags & EV_DELETE) {
@@ -309,7 +318,8 @@ _dispatch_update_kq(const struct kevent *kev)
 		}
 	}
 	
-	int rval = kevent(_dispatch_get_kq(), &kev_copy, 1, &kev_copy, 1, NULL);
+	rval = kevent(_dispatch_get_kq(), &kev_copy, 1, &kev_copy, 1, NULL);
+
 	if (rval == -1) { 
 		// If we fail to register with kevents, for other reasons aside from
 		// changelist elements.

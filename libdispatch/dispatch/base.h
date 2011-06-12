@@ -98,7 +98,13 @@ typedef void (*dispatch_function_t)(void *);
 typedef void (*dispatch_function_apply_t)(void*, size_t);
 
 #ifdef __cplusplus
+#ifdef _MSC_VER
+#define DISPATCH_DECL(name) \
+__pragma(warning(suppress: 4624)) /* warning C4624: '%s' : destructor could not be generated because a base class destructor is inaccessible */ \
+typedef struct name##_s : public dispatch_object_s {} *name##_t
+#else
 #define DISPATCH_DECL(name) typedef struct name##_s : public dispatch_object_s {} *name##_t
+#endif
 #else
 /*! @parseOnly */
 #define DISPATCH_DECL(name) typedef struct name##_s *name##_t

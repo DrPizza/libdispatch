@@ -61,14 +61,14 @@ _dispatch_benchmark_init(void *context)
 	} while (i < cnt);
 	delta = _dispatch_absolute_time() - start;
 
-	lcost = delta;
+	lcost = (long double)delta;
 #if HAVE_MACH_ABSOLUTE_TIME
 	lcost *= bdata->tbi.numer;
 	lcost /= bdata->tbi.denom;
 #endif
 	lcost /= cnt;
 
-	bdata->loop_cost = lcost;
+	bdata->loop_cost = (uint64_t)lcost;
 }
 
 #ifdef __BLOCKS__
@@ -111,16 +111,16 @@ dispatch_benchmark_f(size_t count, register void *ctxt, register void (*func)(vo
 	} while (i < count);
 	delta = _dispatch_absolute_time() - start;
 
-	conversion = delta;
+	conversion = (long double)delta;
 #if HAVE_MACH_ABSOLUTE_TIME
 	conversion *= bdata.tbi.numer;
 	big_denom = bdata.tbi.denom;
 #else
-	big_denom = delta;
+	big_denom = (long double)delta;
 #endif
 	big_denom *= count;
 	conversion /= big_denom;
-	ns = conversion;
+	ns = (uint64_t)conversion;
 
 	return ns - bdata.loop_cost;
 }

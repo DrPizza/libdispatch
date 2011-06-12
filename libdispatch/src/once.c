@@ -37,7 +37,7 @@ DISPATCH_NOINLINE
 void
 dispatch_once_f(dispatch_once_t *val, void *ctxt, void (*func)(void *))
 {
-	volatile long *vval = val;
+	volatile intptr_t *vval = val;
 
 	if (dispatch_atomic_cmpxchg(val, 0l, 1l)) {
 		func(ctxt);

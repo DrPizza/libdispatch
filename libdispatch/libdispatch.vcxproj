@@ -369,6 +369,8 @@
     <ClInclude Include="platform\windows\syslog.h" />
     <ClInclude Include="platform\windows\semaphore.h" />
     <ClInclude Include="platform\windows\pthread.h" />
+    <ClInclude Include="src\continuation_cache.h" />
+    <ClInclude Include="src\debug.h" />
     <ClInclude Include="src\hw_shims.h" />
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="dispatch\interop.h" />
@@ -405,6 +407,8 @@
     <ClCompile Include="platform\windows\unistd.c" />
     <ClCompile Include="src\apply.c" />
     <ClCompile Include="src\benchmark.c" />
+    <ClCompile Include="src\continuation_cache.c" />
+    <ClCompile Include="src\debug.c" />
     <ClCompile Include="src\interop.c" />
     <ClCompile Include="src\legacy.c" />
     <ClCompile Include="src\object.c" />

@@ -60,6 +60,10 @@ namespace gcd
 			}
 		}
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4189)
+#endif
 		void dispatch_counted_function_object(void* context, size_t count)
 		{
 			try
@@ -73,6 +77,9 @@ namespace gcd
 				::DebugBreak();
 			}
 		}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 		struct dispatch_context
 		{
@@ -375,7 +382,7 @@ namespace gcd
 		dispatch_source_cancel(static_cast<dispatch_source_t>(o));
 	}
 
-	unsigned long source::get_data()
+	uintptr_t source::get_data()
 	{
 		return dispatch_source_get_data(static_cast<dispatch_source_t>(o));
 	}

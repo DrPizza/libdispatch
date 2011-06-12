@@ -31,7 +31,7 @@ struct dispatch_apply_s {
 	void	*da_ctxt;
 	size_t	da_iterations;
 	size_t	da_index;
-	uintptr_t	da_thr_cnt;
+	size_t	da_thr_cnt;
 	dispatch_semaphore_t da_sema;
 	long	_da_pad1[DISPATCH_CACHELINE_SIZE / sizeof(long)];
 };
@@ -48,12 +48,12 @@ _dispatch_apply2(void *_ctxt)
 	_dispatch_workitem_dec(); // this unit executes many items
 
 	// Striding is the responsibility of the caller.
-	while (fastpath((idx = dispatch_atomic_inc(&da->da_index) - 1) < iter)) {
+	while (fastpath((idx = dispatch_atomic_inc((intptr_t*)&da->da_index) - 1) < iter)) {
 		func(ctxt, idx);
 		_dispatch_workitem_inc();
 	}
 
-	if (dispatch_atomic_dec(&da->da_thr_cnt) == 0) {
+	if (dispatch_atomic_dec((intptr_t*)&da->da_thr_cnt) == 0) {
 		dispatch_semaphore_signal(da->da_sema);
 	}
 }
@@ -107,7 +107,7 @@ dispatch_apply_f(size_t iterations, dispatch_queue_t dq, void *ctxt, dispatch_fu
 		return;
 	}
 	if (iterations < da.da_thr_cnt) {
-		da.da_thr_cnt = (uint32_t)iterations;
+		da.da_thr_cnt = iterations;
 	}
 	if (slowpath(dq->dq_width <= 2 || da.da_thr_cnt <= 1)) {
 		return dispatch_sync_f(dq, &da, _dispatch_apply_serial);

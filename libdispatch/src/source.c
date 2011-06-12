@@ -54,7 +54,7 @@ dispatch_source_cancel(dispatch_source_t ds)
 	// need to therefore retain/release before setting the bit
 
 	_dispatch_retain(as_do(ds));
-	dispatch_atomic_or(&ds->ds_atomic_flags, (uintptr_t)DSF_CANCELED);
+	dispatch_atomic_or(&ds->ds_atomic_flags, DSF_CANCELED);
 	_dispatch_wakeup(as_do(ds));
 	_dispatch_release(as_do(ds));
 }
@@ -98,7 +98,7 @@ dispatch_source_get_handle(dispatch_source_t ds)
 	return ds->ds_ident_hack;
 }
 
-unsigned long
+uintptr_t
 dispatch_source_get_data(dispatch_source_t ds)
 {
 	return ds->ds_data;
@@ -202,14 +202,14 @@ _dispatch_source_latch_and_call(dispatch_source_t ds)
 	if ((ds->ds_atomic_flags & DSF_CANCELED) || (ds->do_xref_cnt == 0)) {
 		return;
 	}
-	prev = dispatch_atomic_xchg(&ds->ds_pending_data, 0);
+	prev = dispatch_atomic_xchg((intptr_t*)&ds->ds_pending_data, 0);
 	if (ds->ds_is_level) {
 		ds->ds_data = ~prev;
 	} else {
 		ds->ds_data = prev;
 	}
 	dispatch_assume(prev);
-	if(prev){
+	if (prev) {
 		if (ds->ds_handler_func) {
 #ifndef DISPATCH_NO_LEGACY
 			((dispatch_source_handler_function_t)ds->ds_handler_func)(ds->ds_handler_ctxt, ds);

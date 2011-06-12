@@ -118,7 +118,7 @@ main(int argc, char* argv[])
 	struct timespec now_ts;
 
 	interval_d = (double)interval / (double)NSEC_PER_SEC;
-	target = 25 / interval_d;
+	target = (unsigned int)(25 / interval_d);
 
 	test_start("Timer drift test");
 

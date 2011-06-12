@@ -32,28 +32,11 @@
 #include <dispatch/base.h> // for HeaderDoc
 #endif
 
-// If dc_vtable is less than 127, then the object is a continuation.
-// Otherwise, the object has a private layout and memory management rules. The
-// first two words must align with normal objects.
-#define DISPATCH_CONTINUATION_HEADER(x)	\
-	const void *				do_vtable;	\
-	struct x *volatile	do_next;	\
-	dispatch_function_t	dc_func;	\
-	void *						dc_ctxt
-
 #define DISPATCH_OBJ_ASYNC_BIT	0x1
 #define DISPATCH_OBJ_BARRIER_BIT	0x2
 #define DISPATCH_OBJ_GROUP_BIT	0x4
 // vtables are pointers far away from the low page in memory
 #define DISPATCH_OBJ_IS_VTABLE(x)	((uintptr_t)(x)->do_vtable > 127ul)
-
-struct dispatch_continuation_s {
-	DISPATCH_CONTINUATION_HEADER(dispatch_continuation_s);
-	dispatch_group_t	dc_group;
-	void *				dc_data[3];
-};
-
-typedef struct dispatch_continuation_s *dispatch_continuation_t;
 
 struct dispatch_queue_vtable_s {
 	DISPATCH_VTABLE_HEADER(dispatch_queue_s);
@@ -65,20 +48,20 @@ extern const struct dispatch_queue_vtable_s _dispatch_queue_vtable;
 
 #ifndef DISPATCH_NO_LEGACY
 #define DISPATCH_QUEUE_HEADER \
-	uint32_t dq_running; \
-	uint32_t dq_width; \
+	int32_t dq_running; \
+	int32_t dq_width; \
 	struct dispatch_object_s *dq_items_tail; \
 	struct dispatch_object_s *volatile dq_items_head; \
-	unsigned long dq_serialnum; \
+	long dq_serialnum; \
 	void *dq_finalizer_ctxt; \
 	dispatch_queue_finalizer_function_t dq_finalizer_func
 #else
 #define DISPATCH_QUEUE_HEADER \
-	uintptr_t dq_running; \
-	uintptr_t dq_width; \
+	intptr_t dq_running; \
+	intptr_t dq_width; \
 	struct dispatch_object_s *dq_items_tail; \
 	struct dispatch_object_s *volatile dq_items_head; \
-	uintptr_t dq_serialnum; \
+	intptr_t dq_serialnum; \
 	void *dq_finalizer_ctxt; \
 	void* dq_manually_drained; \
 	bool dq_is_manually_draining
@@ -137,20 +120,5 @@ _dispatch_queue_get_current(void)
 {
 	return _dispatch_thread_getspecific(dispatch_queue_key);
 }
-
-__private_extern__ malloc_zone_t *_dispatch_ccache_zone;
-dispatch_continuation_t _dispatch_continuation_alloc_from_heap(void);
-
-static DISPATCH_INLINE dispatch_continuation_t
-_dispatch_continuation_alloc_cacheonly(void)
-{
-	dispatch_continuation_t dc = fastpath(_dispatch_thread_getspecific(dispatch_cache_key));
-	if (dc) {
-		_dispatch_thread_setspecific(dispatch_cache_key, dc->do_next);
-	}
-	return dc;
-}
-
-extern bool _dispatch_program_is_probably_callback_driven;
 
 #endif
