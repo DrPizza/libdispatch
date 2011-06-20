@@ -25,6 +25,7 @@ typedef pthread_items* pthread_items_t;
 
 struct _pthread
 {
+	BOOL privately_owned;
 	HANDLE thread;
 	void* result;
 };
@@ -87,9 +88,12 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 	case DLL_THREAD_ATTACH:
 		{
 			pthread_items_t items = calloc(1, sizeof(pthread_items) + slots_allocated * sizeof(void*));
+			HANDLE thread_handle = INVALID_HANDLE_VALUE;
 			items->count = slots_allocated;
 			items->current_thread = calloc(1, sizeof(pthread));
-			items->current_thread->thread = INVALID_HANDLE_VALUE;
+			items->current_thread->privately_owned = TRUE;
+			DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread_handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
+			items->current_thread->thread = thread_handle;
 			TlsSetValue(pthread_slot, items);
 		}
 		break;
@@ -98,8 +102,9 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 		{
 			pthread_items_t items = TlsGetValue(pthread_slot);
 			_pthread_destructors();
-			if(items->current_thread->thread == INVALID_HANDLE_VALUE)
+			if(items->current_thread->privately_owned)
 			{
+				CloseHandle(items->current_thread->thread);
 				free(items->current_thread);
 			}
 			free(items);
@@ -245,6 +250,7 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_
 	f->fun = start_routine;
 	f->context = arg;
 	f->thread = *thread;
+	f->thread->privately_owned = FALSE;
 	f->thread->thread = CreateThread(NULL, 0, thread_proc, f, 0, NULL);
 	return 0;
 }
