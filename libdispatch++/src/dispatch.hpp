@@ -32,16 +32,16 @@ namespace gcd
 	struct DISPATCHPP_EXPORT object
 	{
 		object(const object& rhs);
-		void debug(const char* message, ...);
-		void retain();
-		void release();
-		void suspend();
-		void resume();
-		void set_target_queue(queue& target);
-		void set_context(void* context);
-		void* get_context();
-		void set_finalizer(function_t finalizer);
-		void set_finalizer(::dispatch_function_t finalizer);
+		void debug(const char* message, ...) const;
+		void retain() const;
+		void release() const;
+		void suspend() const;
+		void resume() const;
+		void set_target_queue(queue& target) const;
+		void set_context(void* context) const;
+		void* get_context() const;
+		void set_finalizer(function_t finalizer) const;
+		void set_finalizer(::dispatch_function_t finalizer) const;
 		virtual ~object();
 		friend struct queue;
 		friend struct group;
@@ -49,7 +49,7 @@ namespace gcd
 
 	protected:
 		object(::dispatch_object_t o_);
-		void* ensure_context();
+		void* ensure_context() const;
 		::dispatch_object_t o;
 	};
 
@@ -61,14 +61,14 @@ namespace gcd
 		static queue get_current_queue();
 		static queue get_global_queue(long priority, unsigned long flags);
 		const char* get_label() const;
-		void after(::dispatch_time_t when, void* context, ::dispatch_function_t work);
-		void after(::dispatch_time_t when, function_t work);
-		void apply(size_t iterations, void* context, ::dispatch_function_apply_t work);
-		void apply(size_t iterations, counted_function_t work);
-		void async(void* context, ::dispatch_function_t work);
-		void async(function_t work);
-		void sync(void* context, ::dispatch_function_t work);
-		void sync(function_t work);
+		void after(::dispatch_time_t when, void* context, ::dispatch_function_t work) const;
+		void after(::dispatch_time_t when, function_t work) const;
+		void apply(size_t iterations, void* context, ::dispatch_function_apply_t work) const;
+		void apply(size_t iterations, counted_function_t work) const;
+		void async(void* context, ::dispatch_function_t work) const;
+		void async(function_t work) const;
+		void sync(void* context, ::dispatch_function_t work) const;
+		void sync(function_t work) const;
 	protected:
 		queue(::dispatch_queue_t q);
 	};
@@ -76,29 +76,29 @@ namespace gcd
 	struct DISPATCHPP_EXPORT group : object
 	{
 		group();
-		void async(queue& queue, void* context, ::dispatch_function_t work);
-		void async(queue& queue, function_t work);
-		void enter();
-		void leave();
-		long wait(::dispatch_time_t when);
-		void notify(queue& queue, void* context, ::dispatch_function_t work);
-		void notify(queue& queue, function_t work);
+		void async(queue& queue, void* context, ::dispatch_function_t work) const;
+		void async(queue& queue, function_t work) const;
+		void enter() const;
+		void leave() const;
+		long wait(::dispatch_time_t when) const;
+		void notify(queue& queue, void* context, ::dispatch_function_t work) const;
+		void notify(queue& queue, function_t work) const;
 	};
 
 	struct DISPATCHPP_EXPORT source : object
 	{
-		source(::dispatch_source_type_t type, uintptr_t handle, unsigned long mask, queue& queue);
-		long test_cancel();
-		void cancel();
-		uintptr_t get_data();
-		uintptr_t get_handle();
-		uintptr_t get_mask();
-		void merge_data(unsigned long value);
-		void set_timer(::dispatch_time_t start, uint64_t interval, uint64_t leeway);
-		void set_event_handler(function_t handler);
-		void set_event_handler(::dispatch_function_t handler);
-		void set_cancel_handler(function_t handler);
-		void set_cancel_handler(::dispatch_function_t handler);
+		source(::dispatch_source_type_t type, uintptr_t handle, uintptr_t mask, queue& queue);
+		long test_cancel() const;
+		void cancel() const;
+		uintptr_t get_data() const;
+		uintptr_t get_handle() const;
+		uintptr_t get_mask() const;
+		void merge_data(uintptr_t value) const;
+		void set_timer(::dispatch_time_t start, uint64_t interval, uint64_t leeway) const;
+		void set_event_handler(function_t handler) const;
+		void set_event_handler(::dispatch_function_t handler) const;
+		void set_cancel_handler(function_t handler) const;
+		void set_cancel_handler(::dispatch_function_t handler) const;
 	};
 
 	struct DISPATCHPP_EXPORT semaphore : object
