@@ -60,7 +60,7 @@ struct timespec;
  */
 typedef uint64_t dispatch_time_t;
 
-#define DISPATCH_TIME_NOW 0
+#define DISPATCH_TIME_NOW 0ull
 #define DISPATCH_TIME_FOREVER (~0ull)
 
 /*!

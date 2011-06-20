@@ -387,7 +387,7 @@ dispatch_source_attr_copy(dispatch_source_attr_t proto)
 dispatch_source_t
 dispatch_source_create(dispatch_source_type_t type,
 	uintptr_t handle,
-	unsigned long mask,
+	uintptr_t mask,
 	dispatch_queue_t q)
 {
 	dispatch_source_t ds = NULL;

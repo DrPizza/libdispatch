@@ -574,7 +574,7 @@ const struct dispatch_source_vtable_s _dispatch_source_kevent_vtable = {
 };
 
 void
-dispatch_source_merge_data(dispatch_source_t ds, unsigned long val)
+dispatch_source_merge_data(dispatch_source_t ds, uintptr_t val)
 {	
 	struct kevent kev = {
 		/* .ident  = */	0,
@@ -591,7 +591,7 @@ dispatch_source_merge_data(dispatch_source_t ds, unsigned long val)
 }
 
 static bool
-dispatch_source_type_kevent_init(dispatch_source_t ds, dispatch_source_type_t type, uintptr_t handle, unsigned long mask, dispatch_queue_t q)
+dispatch_source_type_kevent_init(dispatch_source_t ds, dispatch_source_type_t type, uintptr_t handle, uintptr_t mask, dispatch_queue_t q)
 {
 	const struct kevent *proto_kev = type->opaque;
 	dispatch_kevent_t dk = NULL;
@@ -641,7 +641,7 @@ dispatch_source_type_kevent_init(dispatch_source_t ds, dispatch_source_type_t ty
 }
 
 static bool
-dispatch_source_type_timer_init(dispatch_source_t ds, dispatch_source_type_t type, uintptr_t handle, unsigned long mask, dispatch_queue_t q)
+dispatch_source_type_timer_init(dispatch_source_t ds, dispatch_source_type_t type, uintptr_t handle, uintptr_t mask, dispatch_queue_t q)
 {
 	if (!dispatch_source_type_kevent_init(ds, type, handle, mask, q)) {
 		return false;

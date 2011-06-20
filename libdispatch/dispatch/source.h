@@ -299,7 +299,7 @@ DISPATCH_EXPORT DISPATCH_MALLOC DISPATCH_NOTHROW
 dispatch_source_t
 dispatch_source_create(dispatch_source_type_t type,
 	uintptr_t handle,
-	unsigned long mask,
+	uintptr_t mask,
 	dispatch_queue_t queue);
 
 /*!
@@ -562,7 +562,7 @@ dispatch_source_get_data(dispatch_source_t source);
 __OSX_AVAILABLE_STARTING(__MAC_10_6,__IPHONE_4_0)
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_NOTHROW
 void
-dispatch_source_merge_data(dispatch_source_t source, unsigned long value);
+dispatch_source_merge_data(dispatch_source_t source, uintptr_t value);
 
 /*!
  * @function dispatch_source_set_timer

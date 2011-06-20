@@ -115,7 +115,7 @@ struct dispatch_source_type_s {
         bool (*init) (dispatch_source_t ds,
                       dispatch_source_type_t type,
                       uintptr_t handle,
-                      unsigned long mask,
+                      uintptr_t mask,
                       dispatch_queue_t q);
 };
 
