@@ -61,7 +61,10 @@ _dispatch_get_kq_init(void *context DISPATCH_UNUSED)
 		dispatch_assert_zero(errno);
 	}
 
-	(void)dispatch_assume_zero(kevent(_dispatch_kq, &kev, 1, NULL, 0, NULL)); 
+#if defined(__GNUC__)
+	(void)
+#endif
+	dispatch_assume_zero(kevent(_dispatch_kq, &kev, 1, NULL, 0, NULL)); 
 #endif
 
 	_dispatch_queue_push(_dispatch_mgr_q.do_targetq, as_do(&_dispatch_mgr_q));
@@ -170,7 +173,10 @@ _dispatch_mgr_invoke(dispatch_queue_t dq)
 			r = select(FD_SETSIZE, &tmp_rfds, &tmp_wfds, NULL, sel_timeoutp);
 			if (r == -1) {
 				if (errno != EBADF) {
-					(void)dispatch_assume_zero(errno);
+#if defined(__GNUC__)
+					(void)
+#endif
+					dispatch_assume_zero(errno);
 					continue;
 				}
 				for (i = 0; i < FD_SETSIZE; i++) {
@@ -221,10 +227,15 @@ _dispatch_mgr_invoke(dispatch_queue_t dq)
 
 		switch (k_cnt) {
 		case -1:
-			if (k_err == EBADF) {
-				DISPATCH_CLIENT_CRASH("Do not close random Unix descriptors");
+			{
+				if (k_err == EBADF) {
+					DISPATCH_CLIENT_CRASH("Do not close random Unix descriptors");
+				}
+#if defined(__GNUC__)
+				(void)
+#endif
+				dispatch_assume_zero(k_err);
 			}
-			(void)dispatch_assume_zero(k_err);
 			continue;
 		default:
 			_dispatch_mgr_thread2(kev, (size_t)k_cnt);
@@ -323,7 +334,10 @@ _dispatch_update_kq(const struct kevent *kev)
 	if (rval == -1) { 
 		// If we fail to register with kevents, for other reasons aside from
 		// changelist elements.
-		(void)dispatch_assume_zero(errno);
+#if defined(__GNUC__)
+		(void)
+#endif
+		dispatch_assume_zero(errno);
 		//kev_copy.flags |= EV_ERROR;
 		//kev_copy.data = error;
 		return;

@@ -110,7 +110,8 @@ dispatch_apply_f(size_t iterations, dispatch_queue_t dq, void *ctxt, dispatch_fu
 		da.da_thr_cnt = iterations;
 	}
 	if (slowpath(dq->dq_width <= 2 || da.da_thr_cnt <= 1)) {
-		return dispatch_sync_f(dq, &da, _dispatch_apply_serial);
+		dispatch_sync_f(dq, &da, _dispatch_apply_serial);
+		return;
 	}
 
 	for (i = 0; i < da.da_thr_cnt; i++) {
