@@ -209,6 +209,7 @@
     <ClCompile Include="src\dispatch_starfish.c" />
     <ClCompile Include="src\dispatch_test.c" />
     <ClCompile Include="src\dispatch_timer_set_time.c" />
+    <ClCompile Include="src\dispatch_windows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dispatch_test.h" />

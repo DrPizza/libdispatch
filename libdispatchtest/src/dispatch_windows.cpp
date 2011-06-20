@@ -1,0 +1,71 @@
+#include "dispatch_test.h"
+
+#include <dispatch.hpp>
+#include <iostream>
+
+LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	gcd::queue thread_q = gcd::queue::get_current_thread_queue();
+
+	switch(message) {
+	case WM_COMMAND:
+		{
+			switch(HIWORD(wParam)) {
+			case BN_CLICKED:
+				OutputDebugStringW(L"Button was clicked");
+				gcd::queue::get_global_queue(0, 0).after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), [=] {
+					OutputDebugStringW(L"GLOBAL THREAD");
+					thread_q.async([] {
+						OutputDebugStringW(L"BACK ON WINDOW THREAD");
+					});
+				});
+				break;
+			}
+		}
+		break;
+	case WM_DESTROY:
+		::PostQuitMessage(0);
+		break;
+
+	default:
+		return ::DefWindowProcW(window, message, wParam, lParam);
+	}
+	return 0;
+}
+
+DWORD WINAPI thread_proc(void*)
+{
+	WNDCLASSEXW clazz = { sizeof(WNDCLASSEXW), 0 };
+	clazz.lpszClassName = L"dispatch";
+	clazz.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+	clazz.lpfnWndProc = &window_proc;
+	ATOM atom(::RegisterClassExW(&clazz));
+
+	HWND window(::CreateWindowW(L"dispatch", L"Dispatch Windows", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, nullptr));
+	HWND button(::CreateWindowW(L"BUTTON", L"OK", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 10, 10, 100, 100, window, NULL, 0, nullptr));
+
+	::ShowWindow(window, SW_SHOW);
+	::UpdateWindow(window);
+
+	MSG msg = { 0 };
+	while(::GetMessageW(&msg, NULL, 0, 0)) {
+		if(msg.message == dispatch_get_thread_window_message()) {
+			OutputDebugStringW(L"something was posted to the thread queue.");
+			dispatch_thread_queue_callback();
+			continue;
+		}
+
+		::TranslateMessage(&msg);
+		::DispatchMessageW(&msg);
+	}
+
+	return static_cast<DWORD>(msg.wParam);
+}
+
+int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
+{
+	HANDLE child_thread(::CreateThread(0, 0, &thread_proc, nullptr, 0, nullptr));
+	::WaitForSingleObject(child_thread, INFINITE);
+	
+	return 0;
+}
