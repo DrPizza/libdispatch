@@ -1058,11 +1058,9 @@ void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
-//#pragma comment (linker, "/INCLUDE:__xl_e")
 #pragma comment (linker, "/INCLUDE:_dispatch_tls_callback")
 #else
 #pragma comment (linker, "/INCLUDE:_tls_used")
-//#pragma comment (linker, "/INCLUDE:_xl_e")
 #pragma comment (linker, "/INCLUDE:dispatch_tls_callback")
 #endif
 
@@ -1092,6 +1090,11 @@ dispatch_get_current_thread_queue(void)
 		char thread_label[DISPATCH_QUEUE_MIN_LABEL_SIZE] = {0};
 		snprintf(thread_label, DISPATCH_QUEUE_MIN_LABEL_SIZE, "thread-q-%x", pthread_self());
 		q = dispatch_queue_create(thread_label, 0);
+		q->do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT;
+		q->do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT;
+		q->do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK;
+		q->dq_running = 1;
+		q->dq_width = 1;
 		q->dq_manually_drained = pthread_self();
 		_dispatch_thread_setspecific(dispatch_threaded_queue_key, q);
 	}
