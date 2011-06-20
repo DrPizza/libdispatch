@@ -195,16 +195,16 @@ _dispatch_queue_wakeup_main(void)
 
 	_dispatch_safe_fork = false;
 #else if TARGET_OS_WIN32
-	PostThreadMessage(GetThreadId(_pthread_get_native_handle(pthread_self())), dispatch_get_main_window_message(), 0, 0);
+	PostThreadMessage(GetThreadId(_pthread_get_native_handle(_dispatch_main_q.dq_manually_drained)), dispatch_get_main_window_message(), 0, 0);
 #endif
 }
 
 DISPATCH_NOINLINE
 void
-_dispatch_queue_wakeup_thread(void)
+_dispatch_queue_wakeup_thread(dispatch_queue_t q)
 {
 #if TARGET_OS_WIN32
-	PostThreadMessage(GetThreadId(_pthread_get_native_handle(pthread_self())), dispatch_get_thread_window_message(), 0, 0);
+	PostThreadMessage(GetThreadId(_pthread_get_native_handle(q->dq_manually_drained)), dispatch_get_thread_window_message(), 0, 0);
 #endif
 	// TODO decide on Mac OS X per-thread queue semantics. A mach port per thread would work nicely enough, I think.
 }
@@ -216,7 +216,7 @@ _dispatch_queue_wakeup_manual(dispatch_queue_t q)
 	if (q == &_dispatch_main_q) {
 		_dispatch_queue_wakeup_main();
 	} else {
-		_dispatch_queue_wakeup_thread();
+		_dispatch_queue_wakeup_thread(q);
 	}
 }
 
