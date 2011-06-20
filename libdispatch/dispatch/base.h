@@ -133,7 +133,11 @@ typedef struct name##_s : public dispatch_object_s {} *name##_t
 #define DISPATCH_FORMAT(...) __attribute__((__format__(__VA_ARGS__)))
 #else
 /*! @parseOnly */
+#ifdef _MSC_VER
+#define DISPATCH_NORETURN __declspec(noreturn)
+#else
 #define DISPATCH_NORETURN
+#endif
 /*! @parseOnly */
 #define DISPATCH_NOTHROW
 /*! @parseOnly */
