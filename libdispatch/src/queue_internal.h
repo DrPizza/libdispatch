@@ -48,11 +48,11 @@ extern const struct dispatch_queue_vtable_s _dispatch_queue_vtable;
 
 #ifndef DISPATCH_NO_LEGACY
 #define DISPATCH_QUEUE_HEADER \
-	int32_t dq_running; \
-	int32_t dq_width; \
+	intptr_t dq_running; \
+	intptr_t dq_width; \
 	struct dispatch_object_s *dq_items_tail; \
 	struct dispatch_object_s *volatile dq_items_head; \
-	long dq_serialnum; \
+	intptr_t dq_serialnum; \
 	void *dq_finalizer_ctxt; \
 	dispatch_queue_finalizer_function_t dq_finalizer_func
 #else
