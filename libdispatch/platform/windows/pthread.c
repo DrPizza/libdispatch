@@ -207,7 +207,8 @@ struct _fn
 {
 	void* (*fun)(void*);
 	void* context;
-	pthread* thread;
+	pthread_t* pth;
+	HANDLE evt;
 };
 
 typedef struct _fn fn;
@@ -216,7 +217,9 @@ static DWORD WINAPI thread_proc(void* parameter)
 {
 	fn* f = parameter;
 
-	pthread_self()->thread = f->thread->thread;
+	*f->pth = pthread_self();
+	pthread_self()->privately_owned = FALSE;
+	SetEvent(f->evt);
 	pthread_self()->result = f->fun(f->context);
 
 	free(f);
@@ -226,6 +229,7 @@ static DWORD WINAPI thread_proc(void* parameter)
 int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_routine)(void*), void* arg)
 {
 	fn* f;
+	HANDLE evt = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if(!thread || !start_routine)
 	{
@@ -236,11 +240,6 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_
 		return EINVAL;
 	}
 
-	*thread = calloc(1, sizeof(pthread));
-	if(!*thread)
-	{
-		return ENOMEM;
-	}
 	f = calloc(1, sizeof(fn));
 	if(!f)
 	{
@@ -249,16 +248,17 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_
 
 	f->fun = start_routine;
 	f->context = arg;
-	f->thread = *thread;
-	f->thread->privately_owned = FALSE;
-	f->thread->thread = CreateThread(NULL, 0, thread_proc, f, 0, NULL);
+	f->pth = thread;
+	f->evt = evt;
+	CloseHandle(CreateThread(NULL, 0, thread_proc, f, 0, NULL));
+	WaitForSingleObject(evt, INFINITE);
+	CloseHandle(evt);
 	return 0;
 }
 
 int pthread_detach(pthread_t thread)
 {
-	CloseHandle(thread->thread);
-	thread->thread = INVALID_HANDLE_VALUE;
+	thread->privately_owned = TRUE;
 	return 0;
 }
 
@@ -267,7 +267,7 @@ int pthread_join(pthread_t thread, void** thread_return)
 	WaitForSingleObject(thread->thread, INFINITE);
 	if(thread_return)
 	{
-		thread_return = thread->result;
+		*thread_return = thread->result;
 	}
 	CloseHandle(thread->thread);
 	free(thread);
