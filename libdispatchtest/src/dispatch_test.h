@@ -1,12 +1,8 @@
 #define _CRT_SECURE_NO_DEPRECATE 1
 #define _CRT_SECURE_NO_WARNINGS 1
 
-#define BOOL WINBOOL
-
 #include <SDKDDKVer.h>
 #include <Windows.h>
-
-#undef BOOL
 
 #include <math.h>
 #include <errno.h>

@@ -280,7 +280,7 @@ _dispatch_update_kq(const struct kevent *kev)
 			switch(kev->fflags) {
 			case NOTE_TRIGGER:
 				{
-					WINBOOL rval = PostQueuedCompletionStatus(_dispatch_get_kq(), 0, (ULONG_PTR)(kev), NULL);
+					BOOL rval = PostQueuedCompletionStatus(_dispatch_get_kq(), 0, (ULONG_PTR)(kev), NULL);
 					if (rval == FALSE) { 
 						dispatch_assume_zero(GetLastError());
 					}
