@@ -12,10 +12,10 @@
 #if defined(_WINDLL) // building a DLL
 #define DISPATCHPP_EXPORT __declspec(dllexport)
 #elif defined(_LIB) // building a static lib
-#define DISPATCHPP_EXPORT 
+#define DISPATCHPP_EXPORT
 #elif defined(USE_LIB) // linking a static lib
 #pragma message("Applications must link using /OPT:ICF, COMDAT folding, due to quirks of the Microsoft linker")
-#define DISPATCHPP_EXPORT 
+#define DISPATCHPP_EXPORT
 #else
 #define DISPATCHPP_EXPORT __declspec(dllimport)
 #endif
