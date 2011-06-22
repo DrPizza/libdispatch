@@ -12,11 +12,11 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 		{
 			switch(HIWORD(wParam)) {
 			case BN_CLICKED:
-				OutputDebugStringW(L"Button was clicked");
+				::OutputDebugStringW(L"WINDOW THREAD");
 				gcd::queue::get_global_queue(0, 0).after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), [=] {
-					OutputDebugStringW(L"GLOBAL THREAD");
+					::OutputDebugStringW(L"GLOBAL THREAD");
 					thread_q.async([] {
-						OutputDebugStringW(L"BACK ON WINDOW THREAD");
+						::OutputDebugStringW(L"BACK ON WINDOW THREAD");
 					});
 				});
 				break;
@@ -35,7 +35,7 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 
 DWORD WINAPI thread_proc(void*)
 {
-	WNDCLASSEXW clazz = { sizeof(WNDCLASSEXW), 0 };
+	WNDCLASSEXW clazz = { sizeof(WNDCLASSEXW) };
 	clazz.lpszClassName = L"dispatch";
 	clazz.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
 	clazz.lpfnWndProc = &window_proc;
@@ -48,9 +48,12 @@ DWORD WINAPI thread_proc(void*)
 	::UpdateWindow(window);
 
 	MSG msg = { 0 };
-	while(::GetMessageW(&msg, NULL, 0, 0)) {
+	while(BOOL rv = ::GetMessageW(&msg, NULL, 0, 0)) {
+		if(rv == -1) {
+			return -1;
+		}
 		if(msg.message == dispatch_get_thread_window_message()) {
-			OutputDebugStringW(L"something was posted to the thread queue.");
+			::OutputDebugStringW(L"something was posted to the thread queue.");
 			dispatch_thread_queue_callback();
 			continue;
 		}
@@ -66,6 +69,6 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {
 	HANDLE child_thread(::CreateThread(0, 0, &thread_proc, nullptr, 0, nullptr));
 	::WaitForSingleObject(child_thread, INFINITE);
-	
+	::CloseHandle(child_thread);
 	return 0;
 }
