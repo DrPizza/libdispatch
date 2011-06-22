@@ -1,8 +1,5 @@
 #include "dispatch.hpp"
 
-#include <SDKDDKVer.h>
-#include <Windows.h>
-
 #include <cstdarg>
 #include <memory>
 
@@ -12,6 +9,17 @@ namespace gcd
 {
 	namespace
 	{
+		void DISPATCH_INLINE debug_break()
+		{
+#if defined(_MSC_VER)
+			__debugbreak();
+#elif defined(__GNUC__)
+			asm("int3");
+#else
+			*static_cast<size_t*>(nullptr) = 0;
+#endif
+		}
+
 		template<typename T>
 		struct counted_pointer
 		{
@@ -56,7 +64,7 @@ namespace gcd
 			}
 			catch(std::exception&)
 			{
-				::DebugBreak();
+				debug_break();
 			}
 		}
 
@@ -74,7 +82,7 @@ namespace gcd
 			}
 			catch(std::exception&)
 			{
-				::DebugBreak();
+				debug_break();
 			}
 		}
 #ifdef _MSC_VER
@@ -90,10 +98,6 @@ namespace gcd
 			function_t* cancel_handler;
 			::dispatch_function_t raw_cancel_handler;
 			void* context;
-
-			dispatch_context() : finalizer(nullptr), raw_finalizer(nullptr), context(nullptr)
-			{
-			}
 		};
 
 		void dispatch_finalizer(void* raw_context)
@@ -118,7 +122,7 @@ namespace gcd
 			}
 			catch(std::exception&)
 			{
-				::DebugBreak();
+				debug_break();
 			}
 		}
 
@@ -138,7 +142,7 @@ namespace gcd
 			}
 			catch(std::exception&)
 			{
-				::DebugBreak();
+				debug_break();
 			}
 		}
 
@@ -158,7 +162,7 @@ namespace gcd
 			}
 			catch(std::exception&)
 			{
-				::DebugBreak();
+				debug_break();
 			}
 		}
 	}

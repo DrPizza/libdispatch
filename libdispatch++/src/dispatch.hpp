@@ -21,6 +21,18 @@
 #endif
 #endif
 
+#ifdef dispatch_once
+#undef dispatch_once
+#endif
+
+#ifdef dispatch_once_f
+#undef dispatch_once_f
+#endif
+
+#ifdef dispatch_get_main_queue
+#undef dispatch_get_main_queue
+#endif
+
 namespace gcd
 {
 	typedef std::function<void (void)> function_t;
