@@ -174,9 +174,9 @@ namespace gcd
 	object::object(const object& rhs)
 	{
 		if(this == &rhs) { return; }
-
+		::dispatch_retain(rhs.o);
+		::dispatch_release(o);
 		o = rhs.o;
-		::dispatch_retain(o);
 	}
 
 	void object::debug(const char* message, ...) const
