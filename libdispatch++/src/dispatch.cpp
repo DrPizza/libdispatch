@@ -297,10 +297,12 @@ namespace gcd
 		return queue(::dispatch_get_main_queue());
 	}
 
+#ifdef _WIN32
 	queue queue::get_current_thread_queue()
 	{
 		return queue(dispatch_get_current_thread_queue());
 	}
+#endif
 
 	queue queue::get_current_queue()
 	{

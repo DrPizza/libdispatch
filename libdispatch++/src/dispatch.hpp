@@ -19,7 +19,7 @@
 #include <cstdint>
 
 #if __GNUC__
-#define DISPATCHPP_EXPORT extern __attribute__((visibility("default")))
+#define DISPATCHPP_EXPORT __attribute__((visibility("default")))
 #else
 #if defined(_WINDLL) // building a DLL
 #define DISPATCHPP_EXPORT __declspec(dllexport)
@@ -49,6 +49,9 @@
 
 // Official libdispatch exports this symbol, but idiotically doesn't put it in a public header
 extern "C" dispatch_queue_t dispatch_get_main_queue(void);
+
+// Official libdispatch doesn't include a typedef for this
+typedef void (*dispatch_function_apply_t)(void*, size_t);
 
 namespace gcd
 {
@@ -87,7 +90,10 @@ namespace gcd
 	{
 		queue(const char* label, ::dispatch_queue_attr_t attributes);
 		static queue get_main_queue();
+// TODO libdispatch should probably #define some symbol to say what version it is/what features it supports
+#ifdef _WIN32
 		static queue get_current_thread_queue();
+#endif
 		static queue get_current_queue();
 		static queue get_global_queue(long priority, unsigned long flags);
 		const char* get_label() const;
