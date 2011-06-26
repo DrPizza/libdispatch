@@ -5,7 +5,6 @@
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
 	switch(message) {
 	case WM_COMMAND:
 		{

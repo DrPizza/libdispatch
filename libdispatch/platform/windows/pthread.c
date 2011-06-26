@@ -121,11 +121,9 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
-//#pragma comment (linker, "/INCLUDE:__xl_e")
 #pragma comment (linker, "/INCLUDE:_pthread_tls_callback")
 #else
 #pragma comment (linker, "/INCLUDE:_tls_used")
-//#pragma comment (linker, "/INCLUDE:_xl_e")
 #pragma comment (linker, "/INCLUDE:pthread_tls_callback")
 #endif
 
