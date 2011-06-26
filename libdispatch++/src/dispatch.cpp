@@ -35,12 +35,12 @@ namespace gcd
 				}
 			}
 
-			T& operator* () const
+			T& operator*() const
 			{
 				return *obj;
 			}
 
-			T* operator-> () const
+			T* operator->() const
 			{
 				return obj;
 			}
@@ -54,6 +54,27 @@ namespace gcd
 				delete obj;
 			}
 		};
+
+		template<typename T>
+		struct release_counted_pointer
+		{
+			release_counted_pointer(counted_pointer<T>* ptr_) : ptr(ptr_)
+			{
+			}
+
+			void operator()()
+			{
+				ptr->release();
+			}
+		private:
+			counted_pointer<T>* ptr;
+		};
+
+		template<typename T>
+		release_counted_pointer<T> make_counted_pointer_releaser(counted_pointer<T>* ptr)
+		{
+			return release_counted_pointer<T>(ptr);
+		}
 
 		void dispatch_function_object(void* context)
 		{
@@ -77,7 +98,7 @@ namespace gcd
 			try
 			{
 				counted_pointer<counted_function_t>* fun(static_cast<counted_pointer<counted_function_t>*>(context));
-				ON_BLOCK_EXIT([&] { fun->release(); });
+				ON_BLOCK_EXIT(make_counted_pointer_releaser(fun));
 				(**fun)(count);
 			}
 			catch(std::exception&)
