@@ -552,8 +552,10 @@ _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke)
 		ds->ds_pending_data = ~ke->data;
 	} else if (ds->ds_is_adder) {
 		dispatch_atomic_add((intptr_t*)&ds->ds_pending_data, ke->data);
+	} else if(ds->ds_dkev->dk_kevent.filter == DISPATCH_EVFILT_CUSTOM_OR) {
+		dispatch_atomic_or((intptr_t*)&ds->ds_pending_data, (uintptr_t)ke->data & ds->ds_pending_data_mask);
 	} else {
-		dispatch_atomic_or((intptr_t*)&ds->ds_pending_data, ke->fflags & ds->ds_pending_data_mask);
+		dispatch_atomic_or((intptr_t*)&ds->ds_pending_data, ke->fflags & (u_int)ds->ds_pending_data_mask);
 	}
 
 	// EV_DISPATCH and EV_ONESHOT sources are no longer armed after delivery
@@ -629,7 +631,7 @@ dispatch_source_type_kevent_init(dispatch_source_t ds, dispatch_source_type_t ty
 	// Dispatch Source
 	ds->ds_ident_hack = dk->dk_kevent.ident;
 	ds->ds_dkev = dk;
-	ds->ds_pending_data_mask = dk->dk_kevent.fflags;
+	ds->ds_pending_data_mask = mask;
 	if ((EV_DISPATCH|EV_ONESHOT) & proto_kev->flags) {
 		ds->ds_is_level = true;
 		ds->ds_needs_rearm = true;
