@@ -5,20 +5,22 @@
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	gcd::queue thread_q = gcd::queue::get_current_thread_queue();
 
 	switch(message) {
 	case WM_COMMAND:
 		{
 			switch(HIWORD(wParam)) {
 			case BN_CLICKED:
-				::OutputDebugStringW(L"WINDOW THREAD");
-				gcd::queue::get_global_queue(0, 0).after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), [=] {
-					::OutputDebugStringW(L"GLOBAL THREAD");
-					thread_q.async([] {
-						::OutputDebugStringW(L"BACK ON WINDOW THREAD");
+				{
+					gcd::queue thread_q(gcd::queue::get_current_thread_queue());
+					::OutputDebugStringW(L"WINDOW THREAD\n");
+					gcd::queue::get_global_queue(0, 0).after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), [=] {
+						::OutputDebugStringW(L"GLOBAL THREAD\n");
+						thread_q.async([] {
+							::OutputDebugStringW(L"BACK ON WINDOW THREAD\n");
+						});
 					});
-				});
+				}
 				break;
 			}
 		}
@@ -53,7 +55,6 @@ DWORD WINAPI thread_proc(void*)
 			return -1;
 		}
 		if(msg.message == dispatch_get_thread_window_message()) {
-			::OutputDebugStringW(L"something was posted to the thread queue.");
 			dispatch_thread_queue_callback();
 			continue;
 		}
