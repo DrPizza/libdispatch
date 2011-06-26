@@ -60,6 +60,7 @@ _dispatch_logv(const char *msg, va_list ap)
 #if TARGET_OS_WIN32
 	char message[256];
 	vsnprintf(message, sizeof(message) / sizeof(*message), msg, ap);
+	strncat(message, "\n", sizeof(message) / sizeof(*message));
 	OutputDebugStringA(message);
 #elif DISPATCH_DEBUG
 	static FILE *logfile, *tmp;
