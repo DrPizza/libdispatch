@@ -29,5 +29,8 @@
     <ClInclude Include="src\scopeguard.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\atomic.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

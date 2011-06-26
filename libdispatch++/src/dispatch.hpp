@@ -3,6 +3,18 @@
 
 #include "dispatch/dispatch.h"
 
+#ifndef DISPATCH_INLINE
+
+#ifdef __GNUC__
+#define DISPATCH_INLINE __attribute__((always_inline)) inline
+#elif _MSC_VER
+#define DISPATCH_INLINE __forceinline
+#endif
+
+#endif
+
+#include "atomic.hpp"
+
 #include <functional>
 #include <cstdint>
 
@@ -21,6 +33,8 @@
 #endif
 #endif
 
+// use real functions, not macros, so that I can reuse the names
+
 #ifdef dispatch_once
 #undef dispatch_once
 #endif
@@ -32,6 +46,9 @@
 #ifdef dispatch_get_main_queue
 #undef dispatch_get_main_queue
 #endif
+
+// Official libdispatch exports this symbol, but idiotically doesn't put it in a public header
+extern "C" dispatch_queue_t dispatch_get_main_queue(void);
 
 namespace gcd
 {

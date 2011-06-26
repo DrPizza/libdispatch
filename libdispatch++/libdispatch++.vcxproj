@@ -353,6 +353,7 @@
     <ClCompile Include="src\dispatch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\atomic.hpp" />
     <ClInclude Include="src\dispatch.hpp" />
     <ClInclude Include="src\scopeguard.hpp" />
   </ItemGroup>
