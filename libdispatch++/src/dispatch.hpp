@@ -44,6 +44,7 @@ namespace gcd
 	struct DISPATCHPP_EXPORT object
 	{
 		object(const object& rhs);
+		object& operator=(const object& rhs);
 		void debug(const char* message, ...) const;
 		void retain() const;
 		void release() const;

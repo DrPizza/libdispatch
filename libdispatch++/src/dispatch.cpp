@@ -175,8 +175,16 @@ namespace gcd
 	{
 		if(this == &rhs) { return; }
 		::dispatch_retain(rhs.o);
+		o = rhs.o;
+	}
+
+	object& object::operator=(const object& rhs)
+	{
+		if(this == &rhs) { return *this; }
+		::dispatch_retain(rhs.o);
 		::dispatch_release(o);
 		o = rhs.o;
+		return *this;
 	}
 
 	void object::debug(const char* message, ...) const
