@@ -277,7 +277,9 @@ _dispatch_queue_cleanup_manual(dispatch_queue_t q)
 void
 dispatch_thread_queue_callback(void)
 {
-	_dispatch_manual_queue_drain(dispatch_get_current_thread_queue());
+	dispatch_queue_t q = dispatch_get_current_thread_queue();
+	_dispatch_manual_queue_drain(q);
+	dispatch_release(as_do(q));
 }
 
 void

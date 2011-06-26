@@ -996,6 +996,13 @@ _dispatch_queue_cleanup(void *ctxt)
 	DISPATCH_CRASH("Premature thread exit while a dispatch queue is running");
 }
 
+static void
+_dispatch_queue_cleanup_and_release(void* ctxt)
+{
+	_dispatch_queue_cleanup(ctxt);
+	dispatch_release(as_do((dispatch_queue_t)ctxt));
+}
+
 dispatch_queue_t
 dispatch_get_global_queue(long priority, unsigned long flags)
 {
@@ -1028,7 +1035,7 @@ libdispatch_init(void)
 	_dispatch_thread_key_create(&dispatch_queue_key, _dispatch_queue_cleanup);
 	_dispatch_thread_key_create(&dispatch_sema4_key, (void (*)(void *))dispatch_release); // use the extern release
 	_dispatch_thread_key_create(&dispatch_cache_key, _dispatch_cache_cleanup2);
-	_dispatch_thread_key_create(&dispatch_threaded_queue_key, _dispatch_queue_cleanup);
+	_dispatch_thread_key_create(&dispatch_threaded_queue_key, _dispatch_queue_cleanup_and_release);
 #ifdef DISPATCH_PERF_MON
 	_dispatch_thread_key_create(&dispatch_bcounter_key, NULL);
 #endif
@@ -1051,7 +1058,6 @@ void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 	{
 	case DLL_PROCESS_ATTACH:
 		libdispatch_init();
-		//dispatch_once_f(&_dispatch_root_queues_pred, NULL, _dispatch_root_queues_init);
 		break;
 	}
 }
@@ -1090,14 +1096,13 @@ dispatch_get_current_thread_queue(void)
 		char thread_label[DISPATCH_QUEUE_MIN_LABEL_SIZE] = {0};
 		snprintf(thread_label, DISPATCH_QUEUE_MIN_LABEL_SIZE, "thread-q-%x", pthread_self());
 		q = dispatch_queue_create(thread_label, 0);
-		q->do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT;
-		q->do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT;
 		q->do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK;
 		q->dq_running = 1;
-		q->dq_width = 1;
 		q->dq_manually_drained = pthread_self();
+
 		_dispatch_thread_setspecific(dispatch_threaded_queue_key, q);
 	}
+	dispatch_retain(as_do(q));
 	return q;
 }
 
