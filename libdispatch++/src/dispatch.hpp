@@ -48,7 +48,7 @@
 #endif
 
 // Official libdispatch exports this symbol, but idiotically doesn't put it in a public header
-extern "C" dispatch_queue_t dispatch_get_main_queue(void);
+extern "C" DISPATCHPP_EXPORT dispatch_queue_t dispatch_get_main_queue(void);
 
 // Official libdispatch doesn't include a typedef for this
 typedef void (*dispatch_function_apply_t)(void*, size_t);
