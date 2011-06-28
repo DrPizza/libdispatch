@@ -92,6 +92,9 @@ namespace gcd
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable: 4189)
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 		void dispatch_counted_function_object(void* context, size_t count)
 		{
@@ -108,6 +111,8 @@ namespace gcd
 		}
 #ifdef _MSC_VER
 #pragma warning(pop)
+#elif defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 		struct dispatch_context
