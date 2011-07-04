@@ -78,7 +78,7 @@ enum {
 #define DISPATCH_OBJECT_SUSPEND_LOCK		1u	// "word and bit" must be a power of two to be safely subtracted
 #define DISPATCH_OBJECT_SUSPEND_INTERVAL	2u
 #define DISPATCH_OBJECT_SUSPENDED(x)	((x)->do_suspend_cnt >= DISPATCH_OBJECT_SUSPEND_INTERVAL)
-#ifdef __LP64__
+#if defined(__LP64__) || defined(__LLP64__)
 // the bottom nibble must not be zero, the rest of the bits should be random
 // we sign extend the 64-bit version so that a better instruction encoding is generated on Intel
 #define DISPATCH_OBJECT_LISTLESS	((void *)0xffffffff89abcdef)
