@@ -1,5 +1,5 @@
-#ifndef PTHREAD__H
-#define PTHREAD__H
+#ifndef PLATFORM_WINDOWS_PTHREAD__H
+#define PLATFORM_WINDOWS_PTHREAD__H
 
 #ifdef __cplusplus
 extern "C"
@@ -13,8 +13,6 @@ struct _pthread_attr;
 typedef struct _pthread_attr pthread_attr;
 typedef pthread_attr* pthread_attr_t;
 
-void pthread_exit(void *value_ptr);
-
 typedef long pthread_key_t;
 
 int pthread_key_create(pthread_key_t* key, void (*destr_function)(void*));
@@ -25,7 +23,7 @@ void* pthread_getspecific(pthread_key_t key);
 int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_routine)(void*), void* arg);
 int pthread_detach(pthread_t thread);
 int pthread_join(pthread_t thread, void** thread_return);
-void pthread_exit(void *status);
+__declspec(noreturn) void pthread_exit(void *status);
 pthread_t pthread_self();
 
 void* _pthread_get_native_handle(pthread_t);
