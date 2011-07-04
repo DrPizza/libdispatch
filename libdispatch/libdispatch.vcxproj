@@ -360,10 +360,12 @@
     <ClInclude Include="dispatch\time.h" />
     <ClInclude Include="platform\darwin\platform.h" />
     <ClInclude Include="platform\windows\inttypes.h" />
+    <ClInclude Include="platform\windows\libkern\OSAtomic.h" />
     <ClInclude Include="platform\windows\netinet\in.h" />
     <ClInclude Include="platform\platform.h" />
     <ClInclude Include="platform\unix\platform.h" />
     <ClInclude Include="platform\windows\signal.h" />
+    <ClInclude Include="platform\windows\strings.h" />
     <ClInclude Include="platform\windows\sys\event.h" />
     <ClInclude Include="platform\windows\unistd.h" />
     <ClInclude Include="platform\windows\platform.h" />
@@ -401,9 +403,11 @@
     <ClInclude Include="platform\windows\sys\time.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="platform\windows\libkern\OSAtomic.c" />
     <ClCompile Include="platform\windows\platform.c" />
     <ClCompile Include="platform\windows\pthread.c" />
     <ClCompile Include="platform\windows\semaphore.c" />
+    <ClCompile Include="platform\windows\strings.c" />
     <ClCompile Include="platform\windows\sys\time.c" />
     <ClCompile Include="platform\windows\time.c" />
     <ClCompile Include="platform\windows\pthread_workqueue.c" />

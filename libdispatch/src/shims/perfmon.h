@@ -45,21 +45,21 @@
 static DISPATCH_INLINE void
 _dispatch_workitem_inc(void)
 {
-	unsigned long cnt = (unsigned long)_dispatch_thread_getspecific(dispatch_bcounter_key);
+	uintptr_t cnt = (uintptr_t)_dispatch_thread_getspecific(dispatch_bcounter_key);
 	_dispatch_thread_setspecific(dispatch_bcounter_key, (void *)++cnt);
 }
 static DISPATCH_INLINE void
 _dispatch_workitem_dec(void)
 {
-	unsigned long cnt = (unsigned long)_dispatch_thread_getspecific(dispatch_bcounter_key);
+	uintptr_t cnt = (uintptr_t)_dispatch_thread_getspecific(dispatch_bcounter_key);
 	_dispatch_thread_setspecific(dispatch_bcounter_key, (void *)--cnt);
 }
 #endif /* USE_APPLE_TSD_OPTIMIZATIONS */
 
 // C99 doesn't define flsll() or ffsll()
-#ifdef __LP64__
+#if defined(__LP64__)
 #define flsll(x) flsl(x)
-#else
+#elif !defined(__LLP64__)
 static DISPATCH_INLINE unsigned int
 flsll(uint64_t val)
 {
@@ -72,9 +72,10 @@ flsll(uint64_t val)
 #endif
 		} words;
 		uint64_t word;
-	} _bucket = {
-		.word = val,
-	};
+	} _bucket = { 0 };
+
+	_bucket.word = val;
+	
 	if (_bucket.words.hi) {
 		return fls(_bucket.words.hi) + 32;
 	}

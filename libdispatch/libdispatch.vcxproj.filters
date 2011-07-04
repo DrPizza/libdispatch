@@ -179,6 +179,12 @@
     <ClInclude Include="platform\windows\inttypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="platform\windows\strings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\windows\libkern\OSAtomic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\shims\tsd.c">
@@ -251,6 +257,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\debug.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\strings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\libkern\OSAtomic.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

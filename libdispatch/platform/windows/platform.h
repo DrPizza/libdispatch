@@ -1,7 +1,28 @@
 #ifndef PLATFORM_WINDOWS_PLATFORM__H
 #define PLATFORM_WINDOWS_PLATFORM__H
 
+#define _CRT_SECURE_NO_DEPRECATE 1
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <SDKDDKVer.h>
+#include <Windows.h>
+
+#ifdef SLIST_ENTRY
+#undef SLIST_ENTRY
+#endif
+#define NT_SLIST_ENTRY SINGLE_LIST_ENTRY
+
+#if defined(_M_IX86)
+#define __i386__
+#elif defined(_M_X64)
+#define __x86_64__
+#define __LLP64__
+#else
+#error Unsupported architecture
+#endif
+
 #define DISPATCH_NO_LEGACY 1
+#define DISPATCH_PERF_MON 1
 #define HAVE_DECL_CLOCK_MONOTONIC 0
 #define HAVE_DECL_CLOCK_REALTIME 0
 #define HAVE_DECL_CLOCK_UPTIME 1
@@ -20,7 +41,7 @@
 #define HAVE_GETPROGNAME 0
 #define HAVE_INTTYPES_H 1
 #define HAVE_LEAKS 0
-#define HAVE_LIBKERN_OSATOMIC_H 0
+#define HAVE_LIBKERN_OSATOMIC_H 1
 #define HAVE_LIBKERN_OSCROSSENDIAN_H 0
 #define HAVE_MACH_ABSOLUTE_TIME 0
 #define HAVE_MALLOC_CREATE_ZONE 0
@@ -61,17 +82,6 @@
 #define VERSION "1.0"
 #define __private_extern__
 
-#define _CRT_SECURE_NO_DEPRECATE 1
-#define _CRT_SECURE_NO_WARNINGS 1
-
-#include <SDKDDKVer.h>
-#include <Windows.h>
-
-#ifdef SLIST_ENTRY
-#undef SLIST_ENTRY
-#endif
-#define NT_SLIST_ENTRY SINGLE_LIST_ENTRY
-
 #ifdef __BLOCKS__
 #define BLOCK_EXPORT extern "C" __declspec(dllexport)
 #include <Block_private.h>
@@ -95,6 +105,7 @@
 #include "semaphore.h"
 #include "signal.h"
 #include "unistd.h"
+#include "strings.h"
 
 #include "sys/mount.h"
 #include "sys/queue.h"
@@ -103,6 +114,8 @@
 
 #include "pthread.h"
 #include "pthread_workqueue.h"
+
+#include "libkern/OSAtomic.h"
 
 #pragma warning(disable : 4098) // warning C4098: 'identifier': 'void' function returning a value
 #pragma warning(disable : 4100) // warning C4100: 'identifier': unreferenced formal parameter
@@ -114,15 +127,6 @@
 #pragma warning(disable : 4706) // warning C4706: assignment within conditional expression
 
 #define __builtin_return_address(X) _ReturnAddress()
-#if defined(_M_IX86)
-#define __i386__
-#elif defined(_M_X64)
-#define __x86_64__
-// TODO Win64 is not an LP64 platform. We should have a different symbol, to explicitly denote 64-bit pointers.
-#define __LP64__
-#else
-#error Unsupported architecture
-#endif
 
 #define snprintf _snprintf
 

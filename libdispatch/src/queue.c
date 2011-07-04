@@ -365,7 +365,7 @@ struct dispatch_queue_s _dispatch_root_queues[] = {
 
 #if DISPATCH_PERF_MON
 static OSSpinLock _dispatch_stats_lock;
-static size_t _dispatch_bad_ratio;
+static uintptr_t _dispatch_bad_ratio;
 static struct {
 	uint64_t time_total;
 	uint64_t count_total;
@@ -449,7 +449,7 @@ _dispatch_queue_concurrent_drain_one(dispatch_queue_t dq)
 		_dispatch_debug("Contention on queue: %p", dq);
 		_dispatch_queue_wakeup_global(dq);
 #if DISPATCH_PERF_MON
-		dispatch_atomic_inc(&_dispatch_bad_ratio);
+		dispatch_atomic_inc((intptr_t*)&_dispatch_bad_ratio);
 #endif
 		return NULL;
 	}
@@ -1583,6 +1583,9 @@ _dispatch_worker_thread2(void *context)
 	struct dispatch_object_s *item;
 	dispatch_queue_t dq = context;
 	struct dispatch_root_queue_context_s *qc = dq->do_ctxt;
+#if DISPATCH_PERF_MON
+	uint64_t start;
+#endif
 
 	if (_dispatch_thread_getspecific(dispatch_queue_key)) {
 		DISPATCH_CRASH("Premature thread recycling");
@@ -1598,7 +1601,7 @@ _dispatch_worker_thread2(void *context)
 #endif
 
 #if DISPATCH_PERF_MON
-	uint64_t start = _dispatch_absolute_time();
+	start = _dispatch_absolute_time();
 #endif
 	while ((item = fastpath(_dispatch_queue_concurrent_drain_one(dq)))) {
 		_dispatch_continuation_pop(as_do(item));
@@ -1622,9 +1625,9 @@ void
 _dispatch_queue_merge_stats(uint64_t start)
 {
 	uint64_t avg, delta = _dispatch_absolute_time() - start;
-	unsigned long count, bucket;
+	uintptr_t count, bucket;
 
-	count = (size_t)_dispatch_thread_getspecific(dispatch_bcounter_key);
+	count = (uintptr_t)_dispatch_thread_getspecific(dispatch_bcounter_key);
 	_dispatch_thread_setspecific(dispatch_bcounter_key, NULL);
 
 	if (count) {
