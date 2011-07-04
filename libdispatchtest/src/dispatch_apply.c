@@ -24,9 +24,11 @@
 
 #include <dispatch/dispatch.h>
 
-volatile int32_t count = 0;
+volatile intptr_t count = 0;
 
 void incrementer(void* context, size_t i) {
+	UNREFERENCED_PARAMETER(context);
+	UNREFERENCED_PARAMETER(i);
 	dispatch_atomic_inc(&count);
 }
 
@@ -43,7 +45,7 @@ main(void)
 
 	dispatch_apply_f(final, queue, NULL, &incrementer);
 
-	test_long("count", count, final);
+	test_long("count", (long)count, final);
 	test_stop();
 
 	return 0;

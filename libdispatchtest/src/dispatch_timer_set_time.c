@@ -36,6 +36,7 @@ static void
 cancel_handler(void* context)
 {
 	struct timeval end_time;
+	UNREFERENCED_PARAMETER(context);
 	gettimeofday(&end_time, NULL);
 	// Make sure we actually managed to adjust the interval
 	// duration.  Seven one second ticks would blow past
@@ -48,6 +49,7 @@ cancel_handler(void* context)
 static void
 event_handler(void* context)
 {
+	UNREFERENCED_PARAMETER(context);
 	++i;
 	fprintf(stderr, "%d\n", i);
 	if (i >= 7) {
@@ -77,6 +79,4 @@ main(void)
 	dispatch_resume(as_do(timer));
 
 	dispatch_main();
-
-	return 0;
 }

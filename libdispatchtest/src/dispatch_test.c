@@ -11,6 +11,12 @@
 //#include <sys/errno.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4127) // conditional expression is constant
+#pragma warning(disable: 4130) // '==' : logical operation on address of string constant
+#endif
+
 #define _test_print(_file, _line, _desc, \
 	_expr, _fmt1, _val1, _fmt2, _val2) do { \
 	const char* _exprstr = _expr ? "PASS" : "FAIL"; \
@@ -42,7 +48,7 @@
 		printf("\t%s:%ld\n", _file, _line); \
 	} \
 	fflush(stdout); \
-} while (0);
+} while (0)
 
 void
 test_start(const char* desc) {
@@ -55,29 +61,25 @@ test_start(const char* desc) {
 #define test_ptr_null(a,b) _test_ptr_null(__FILE__, __LINE__, a, b)
 void
 _test_ptr_null(const char* file, long line, const char* desc, const void* ptr) {
-	_test_print(file, line, desc,
-		(ptr == NULL), "%p", ptr, "%p", (void*)0);
+	_test_print(file, line, desc, (ptr == NULL), "%p", ptr, "%p", (void*)0);
 }
 
 #define test_ptr_notnull(a,b) _test_ptr_notnull(__FILE__, __LINE__, a, b)
 void
 _test_ptr_notnull(const char* file, long line, const char* desc, const void* ptr) {
-	_test_print(file, line, desc,
-		(ptr != NULL), "%p", ptr, "%p", ptr ? ptr : (void*)~(size_t)0);
+	_test_print(file, line, desc, (ptr != NULL), "%p", ptr, "%p", ptr ? ptr : (void*)~(size_t)0);
 }
 
 #define test_ptr(a,b,c) _test_ptr(__FILE__, __LINE__, a, b, c)
 void
 _test_ptr(const char* file, long line, const char* desc, const void* actual, const void* expected) {
-	_test_print(file, line, desc,
-		(actual == expected), "%p", actual, "%p", expected);
+	_test_print(file, line, desc, (actual == expected), "%p", actual, "%p", expected);
 }
 
 #define test_long(a,b,c) _test_long(__FILE__, __LINE__, a, b, c)
 void
 _test_long(const char* file, long line, const char* desc, long actual, long expected) {
-	_test_print(file, line, desc,
-		(actual == expected), "%ld", actual, "%ld", expected);
+	_test_print(file, line, desc, (actual == expected), "%ld", actual, "%ld", expected);
 }
 
 #define test_long_less_than(a, b, c) _test_long_less_than(__FILE__, __LINE__, a, b, c)
@@ -111,8 +113,7 @@ _test_errno(const char* file, long line, const char* desc, long actual, long exp
 	char* expected_str = malloc(256);
 	_snprintf(actual_str, 256, "%ld\t%s", actual, actual ? strerror(actual) : "");
 	_snprintf(expected_str, 256, "%ld\t%s", expected, expected ? strerror(expected) : "");
-	_test_print(file, line, desc,
-		(actual == expected), "%s", actual_str, "%s", expected_str);
+	_test_print(file, line, desc, (actual == expected), "%s", actual_str, "%s", expected_str);
 	free(actual_str);
 	free(expected_str);
 }
@@ -135,7 +136,7 @@ test_stop_after_delay(void *delay) {
 #endif
 
 	if (delay != NULL) {
-		Sleep((DWORD)delay * 1000);
+		Sleep((DWORD)(SIZE_T)delay * 1000);
 	}
 
 #if HAVE_LEAKS
@@ -157,3 +158,7 @@ test_stop_after_delay(void *delay) {
 #endif
 	_exit(EXIT_SUCCESS);
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

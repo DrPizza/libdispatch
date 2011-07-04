@@ -23,12 +23,6 @@
 #include <dispatch.hpp>
 #include <iostream>
 
-void async_f(void*)
-{
-	test_stop();
-	exit(0);
-}
-
 int main(void) {
 	test_start("Dispatch C++");
 
@@ -40,5 +34,4 @@ int main(void) {
 	});
 
 	dispatch_main();
-	return 0;
 }

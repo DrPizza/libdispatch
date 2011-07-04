@@ -31,16 +31,16 @@
 static void
 group_callback(void* context)
 {
-	int delay = (int)context;
+	intptr_t delay = (intptr_t)context;
 	if (delay) {
 		fprintf(stderr, "sleeping...\n");
-		Sleep(delay * 1000);
+		Sleep((DWORD)(delay * 1000));
 		fprintf(stderr, "done.\n");
 	}
 }
 
 static dispatch_group_t
-create_group(size_t count, int delay)
+create_group(size_t count, intptr_t delay)
 {
 	size_t i;
 
@@ -60,6 +60,7 @@ create_group(size_t count, int delay)
 static void
 noop(void* unused)
 {
+	UNREFERENCED_PARAMETER(unused);
 }
 
 static void
@@ -67,6 +68,7 @@ group_notification(void* unused)
 {
 	dispatch_queue_t m = dispatch_get_main_queue();
 	dispatch_queue_t c = dispatch_get_current_queue();
+	UNREFERENCED_PARAMETER(unused);
 	test_ptr("Notification Received", m, c);
 	test_stop();
 }
@@ -113,6 +115,4 @@ main(void)
 	group = NULL;
 
 	dispatch_main();
-
-	return 0;
 }

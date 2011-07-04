@@ -61,11 +61,13 @@ static void do_test(void);
 #pragma warning(disable: 4098) // warning C4098: '%s' : 'void' function returning a value
 #endif
 static void
-collect(void *context)
+collect(void *ctxt)
 {
 	uint64_t delta;
 	long double math;
 	size_t i;
+
+	UNREFERENCED_PARAMETER(ctxt);
 
 	if (--count_down) {
 		return;
@@ -132,7 +134,7 @@ start_node(void *context)
 	dispatch_queue_t this_q = context;
 	size_t i;
 
-	dispatch_set_context(as_do(this_q), (void *)COUNT);
+	dispatch_set_context(as_do(this_q), (void *)(uintptr_t)COUNT);
 
 	for (i = 0; i < COUNT; i++) {
 		dispatch_async_f(queues[i], this_q, ping);

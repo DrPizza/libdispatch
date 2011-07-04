@@ -23,7 +23,7 @@
 #define __DISPATCH_INDIRECT__
 #include "../../libdispatch/src/queue_private.h"
 
-int done = 0;
+intptr_t done = 0;
 
 #define BLOCKS 128
 #define PRIORITIES 3
@@ -38,19 +38,19 @@ const char *labels[PRIORITIES] = { "LOW", "DEFAULT", "HIGH" };
 int priorities[PRIORITIES] = { DISPATCH_QUEUE_PRIORITY_LOW, DISPATCH_QUEUE_PRIORITY_DEFAULT, DISPATCH_QUEUE_PRIORITY_HIGH };
 
 union {
-	long count;
+	intptr_t count;
 	char padding[64];
 } counts[PRIORITIES];
 
 #define ITERATIONS (long)(PRIORITIES * BLOCKS * 0.50)
-long iterations = ITERATIONS;
+intptr_t iterations = ITERATIONS;
 
 void
 histogram(void) {
 	long maxcount = BLOCKS;
-	long sc[PRIORITIES];
+	intptr_t sc[PRIORITIES];
 	
-	long total = 0;
+	intptr_t total = 0;
 	
 	long x,y;
 	for (y = 0; y < PRIORITIES; ++y) {
@@ -71,15 +71,15 @@ histogram(void) {
 		printf("\n");
 	}
 	
-	test_long("blocks completed", total, ITERATIONS);
+	test_long("blocks completed", (long)total, ITERATIONS);
 	test_long_less_than("high priority precedence", (long)sc[0], (long)sc[2]);
 }
 
 void
 cpubusy(void* context)
 {
-	long *count = context;
-	long iterdone;
+	intptr_t *count = context;
+	intptr_t iterdone;
 
 	long idx;
 
@@ -113,7 +113,7 @@ submit_work(dispatch_queue_t queue, void* context)
 }
 
 int
-main(int argc, char* argv[])
+main()
 {
 	dispatch_queue_t q[PRIORITIES];
 	int i;
@@ -139,6 +139,4 @@ main(int argc, char* argv[])
 	}
 
 	dispatch_main();
-
-	return 0;
 }

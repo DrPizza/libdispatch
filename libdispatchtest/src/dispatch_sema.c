@@ -28,11 +28,14 @@
 
 #define LAPS 10000
 
-static size_t total;
+static intptr_t total;
 dispatch_semaphore_t dsema;
 
 void semaphore_callback(void* context, size_t unused)
 {
+	UNREFERENCED_PARAMETER(context);
+	UNREFERENCED_PARAMETER(unused);
+
 	dispatch_semaphore_wait(dsema, DISPATCH_TIME_FOREVER);
 	dispatch_atomic_inc(&total);
 	dispatch_semaphore_signal(dsema);
@@ -50,7 +53,7 @@ main(void)
 
 	dispatch_release(as_do(dsema));
 
-	test_long("count", total, LAPS);
+	test_long("count", (long)total, LAPS);
 	test_stop();
 
 	return 0;

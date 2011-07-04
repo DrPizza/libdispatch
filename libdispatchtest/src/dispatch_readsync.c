@@ -26,7 +26,7 @@
 #define LAPS 10000
 #define INTERVAL 100
 
-static size_t r_count = LAPS;
+static intptr_t r_count = LAPS;
 static size_t w_count = LAPS / INTERVAL;
 
 dispatch_queue_t dq;
@@ -34,6 +34,7 @@ dispatch_queue_t dq;
 static void
 writer(void *ctxt)
 {
+	UNREFERENCED_PARAMETER(ctxt);
 	if (--w_count == 0) {
 		if (r_count == 0) {
 			test_stop();
@@ -44,6 +45,7 @@ writer(void *ctxt)
 static void
 reader(void *ctxt)
 {
+	UNREFERENCED_PARAMETER(ctxt);
 	if (dispatch_atomic_dec(&r_count) == 0) {
 		if (r_count == 0) {
 			test_stop();
@@ -54,6 +56,8 @@ reader(void *ctxt)
 static void
 apply_fn(void* ctxt, size_t idx)
 {
+	UNREFERENCED_PARAMETER(ctxt);
+
 	dispatch_sync_f(dq, NULL, reader);
 
 	if (idx % INTERVAL) {

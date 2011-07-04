@@ -38,5 +38,4 @@ int main(void) {
 
 	dispatch_async_f(dispatch_get_main_queue(), NULL, work);
 	dispatch_main();
-	return 0;
 }

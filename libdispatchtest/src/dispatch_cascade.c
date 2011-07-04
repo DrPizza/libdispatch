@@ -36,7 +36,7 @@ union {
 	char padding[64];
 } indices[BLOCKS];
 
-size_t iterations = (size_t)(QUEUES * BLOCKS * 0.25);
+intptr_t iterations = (intptr_t)(QUEUES * BLOCKS * 0.25);
 
 void
 histogram(void) {
@@ -93,7 +93,7 @@ cascade(void* context) {
 }
 
 int
-main(int argc, char* argv[]) {
+main() {
 	int i;
 
 	test_start("Dispatch Cascade");
@@ -107,6 +107,4 @@ main(int argc, char* argv[]) {
 	}
 
 	dispatch_main();
-
-	return 0;
 }

@@ -66,7 +66,7 @@ struct timespec
 // values. Skew between different clocks is to be expected.
 //
 
-uint32_t count = 0;
+intptr_t count = 0;
 double last_jitter = 0;
 double first = 0;
 double jittersum = 0;
@@ -82,6 +82,8 @@ void timer_handler(void* context)
 	double goal;
 	double jitter;
 	double drift;
+
+	UNREFERENCED_PARAMETER(context);
 
 	gettimeofday(&now_tv, NULL);
 	now = now_tv.tv_sec + ((double)now_tv.tv_usec / (double)USEC_PER_SEC);
@@ -109,7 +111,7 @@ void timer_handler(void* context)
 }
 
 int
-main(int argc, char* argv[])
+main()
 {
 	// interval is 1/10th of a second
 	uint64_t interval = NSEC_PER_SEC / 10;
@@ -138,5 +140,4 @@ main(int argc, char* argv[])
 	dispatch_resume(as_do(timer));
 
 	dispatch_main();
-	return 0;
 }
