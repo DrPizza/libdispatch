@@ -67,6 +67,9 @@
     <ClCompile Include="src\dispatch_windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\shims\asprintf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dispatch_test.h">

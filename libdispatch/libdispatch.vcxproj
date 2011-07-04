@@ -204,6 +204,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LargeAddressAware>true</LargeAddressAware>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'">
@@ -289,6 +290,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <LargeAddressAware>true</LargeAddressAware>
+      <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
@@ -357,6 +359,7 @@
     <ClInclude Include="dispatch\source.h" />
     <ClInclude Include="dispatch\time.h" />
     <ClInclude Include="platform\darwin\platform.h" />
+    <ClInclude Include="platform\windows\inttypes.h" />
     <ClInclude Include="platform\windows\netinet\in.h" />
     <ClInclude Include="platform\platform.h" />
     <ClInclude Include="platform\unix\platform.h" />

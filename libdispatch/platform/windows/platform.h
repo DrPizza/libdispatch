@@ -84,8 +84,10 @@
 #include <stdarg.h>
 #ifndef _MSC_VER
 #include <stdbool.h>
+#include <inttypes.h>
 #else
 #include "platform/windows/stdbool.h"
+#include "platform/windows/inttypes.h"
 #endif
 #include <stdarg.h>
 #include <stdint.h>

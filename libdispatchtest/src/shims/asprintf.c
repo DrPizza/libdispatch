@@ -23,73 +23,48 @@
 
 #include "config/config.h"
 
-#ifndef HAVE_VASPRINTF
-
 #include <stdio.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
-#define INIT_SZ	128
-
-int
-vasprintf(char **str, const char *fmt, va_list ap)
-{
-	int ret = -1;
-	va_list ap2;
-	char *string, *newstr;
-	size_t len;
-
-	va_copy(ap2, ap);
-	if ((string = malloc(INIT_SZ)) == NULL)
-		goto fail;
-
-	ret = vsnprintf(string, INIT_SZ, fmt, ap2);
-	if (ret >= 0 && ret < INIT_SZ) { /* succeeded with initial alloc */
-		*str = string;
-	} else if (ret < 0) { /* Bad length */
-		free(string);
-		goto fail;
-	} else {	/* bigger than initial, realloc allowing for nul */
-		len = (size_t)ret + 1;
-		if ((newstr = realloc(string, len)) == NULL) {
-			free(string);
-			goto fail;
-		} else {
-			va_end(ap2);
-			va_copy(ap2, ap);
-			ret = vsnprintf(newstr, len, fmt, ap2);
-			if (ret >= 0 && (size_t)ret < len) {
-				*str = newstr;
-			} else { /* failed with realloc'ed string, give up */
-				free(newstr);
-				goto fail;
-			}
-		}
-	}
-	va_end(ap2);
-	return (ret);
-
-fail:
-	*str = NULL;
-	errno = ENOMEM;
-	va_end(ap2);
-	return (-1);
-}
-#endif
-
 #ifndef HAVE_ASPRINTF
 int asprintf(char **str, const char *fmt, ...)
 {
 	va_list ap;
-	int ret;
+	size_t n, size = 32;
+	char* p;
+	char* np;
 	
-	*str = NULL;
-	va_start(ap, fmt);
-	ret = vasprintf(str, fmt, ap);
-	va_end(ap);
+	if((p = malloc(size)) == NULL)
+	{
+		return -1;
+	}
 
-	return ret;
+	while(1)
+	{
+		va_start(ap, fmt);
+		n = vsnprintf(p, size, fmt, ap);
+		va_end(ap);
+		if(n > -1 && n < size)
+		{
+			*str = p;
+			return n;
+		}
+		else
+		{
+			size *= 2;
+		}
+		if((np = realloc(p, size)) == NULL)
+		{
+			free(p);
+			return -1;
+		}
+		else
+		{
+			p = np;
+		}
+	}
 }
 #endif

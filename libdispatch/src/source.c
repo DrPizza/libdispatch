@@ -262,7 +262,7 @@ dispatch_source_debug_attr(dispatch_source_t ds, char* buf, size_t bufsiz)
 {
 	dispatch_queue_t target = ds->do_targetq;
 	return snprintf(buf, bufsiz,
-			"target = %s[%p], pending_data = 0x%lx, pending_data_mask = 0x%lx, ",
+			"target = %s[%p], pending_data = 0x%p, pending_data_mask = 0x%p, ",
 			target ? target->dq_label : "", target,
 			ds->ds_pending_data, ds->ds_pending_data_mask);
 }
