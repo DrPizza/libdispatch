@@ -1,5 +1,5 @@
-#ifndef SYS_MOUNT__H
-#define SYS_MOUNT__H
+#ifndef PLATFORM_WINDOWS_SYS_MOUNT__H
+#define PLATFORM_WINDOWS_SYS_MOUNT__H
 
 #define VQ_NOTRESP      0x0001  /* server down */
 #define VQ_NEEDAUTH     0x0002  /* server bad auth */

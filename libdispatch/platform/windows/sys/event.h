@@ -1,5 +1,5 @@
-#ifndef SYS_EVENT__H
-#define SYS_EVENT__H
+#ifndef PLATFORM_WINDOWS_SYS_EVENT__H
+#define PLATFORM_WINDOWS_SYS_EVENT__H
 
 struct kevent {
 	uintptr_t ident;        /* identifier for this event */

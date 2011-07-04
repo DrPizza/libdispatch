@@ -1,5 +1,5 @@
-#ifndef SEMAPHORE__H
-#define SEMAPHORE__H
+#ifndef PLATFORM_WINDOWS_SEMAPHORE__H
+#define PLATFORM_WINDOWS_SEMAPHORE__H
 
 #include "time.h"
 

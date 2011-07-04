@@ -1,4 +1,4 @@
-#ifndef SYSLOG__H
-#define SYSLOG__H
+#ifndef PLATFORM_WINDOWS_SYSLOG__H
+#define PLATFORM_WINDOWS_SYSLOG__H
 
 #endif

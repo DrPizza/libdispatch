@@ -1,4 +1,4 @@
-#ifndef NETINET_IN__H
-#define NETINET_IN__H
+#ifndef PLATFORM_WINDOWS_NETINET_IN__H
+#define PLATFORM_WINDOWS_NETINET_IN__H
 
 #endif

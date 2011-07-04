@@ -1,5 +1,5 @@
-#ifndef POSIX_TIME__H
-#define POSIX_TIME__H
+#ifndef PLATFORM_WINDOWS_TIME__H
+#define PLATFORM_WINDOWS_TIME__H
 
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <stdlib.h>

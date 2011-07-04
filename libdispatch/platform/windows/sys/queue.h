@@ -30,8 +30,8 @@
  * $FreeBSD: src/sys/sys/queue.h,v 1.72.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $
  */
 
-#ifndef SYS_QUEUE__H
-#define SYS_QUEUE__H
+#ifndef PLATFORM_WINDOWS_SYS_QUEUE__H
+#define PLATFORM_WINDOWS_SYS_QUEUE__H
 
 /*
  * This file defines five types of data structures: singly-linked lists,

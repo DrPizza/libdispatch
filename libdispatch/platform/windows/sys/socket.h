@@ -1,4 +1,4 @@
-#ifndef SYS_SOCKET__H
-#define SYS_SOCKET__H
+#ifndef PLATFORM_WINDOWS_SYS_SOCKET__H
+#define PLATFORM_WINDOWS_SYS_SOCKET__H
 
 #endif

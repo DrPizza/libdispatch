@@ -1,5 +1,5 @@
-#ifndef STDBOOL__H
-#define STDBOOL__H
+#ifndef PLATFORM_WINDOWS_STDBOOL__H
+#define PLATFORM_WINDOWS_STDBOOL__H
 
 #ifndef __cplusplus
 
