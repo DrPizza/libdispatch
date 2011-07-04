@@ -49,10 +49,6 @@ dispatch_get_main_queue(void)
 	return &_dispatch_main_q;
 }
 
-#if !TARGET_OS_WIN32
-#define dispatch_get_main_queue() (&_dispatch_main_q)
-#endif
-
 /*
  * XXXRW: Work-around for possible clang bug in which __builtin_trap() is not
  * marked noreturn, leading to a build error as dispatch_main() *is* marked
@@ -62,10 +58,13 @@ dispatch_get_main_queue(void)
 void __builtin_trap(void) __attribute__((__noreturn__));
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4702) // unreachable code
+#endif
 void
 dispatch_main(void)
 {
-
 #if HAVE_PTHREAD_MAIN_NP
 	if (pthread_main_np()) {
 #endif
@@ -77,6 +76,9 @@ dispatch_main(void)
 	DISPATCH_CLIENT_CRASH("dispatch_main() must be called on the main thread");
 #endif
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 // 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
 DISPATCH_NOINLINE
@@ -220,29 +222,23 @@ _dispatch_queue_wakeup_manual(dispatch_queue_t q)
 	}
 }
 
+#if !TARGET_OS_WIN32
 static void
 _dispatch_sigsuspend(void *ctxt DISPATCH_UNUSED)
 {
-	// not sure if this is really the right thing to do.
-	// after all, this workitem is placed in an aync queue,
-	// so all we're achieving is tying up a thread.
-#if TARGET_OS_WIN32
-	for (;;) {
-		Sleep(INFINITE);
-	}
-#else
 	static const sigset_t mask;
 
 	for (;;) {
 		sigsuspend(&mask);
 	}
-#endif
 }
+#endif
 
 DISPATCH_NOINLINE
 void
 _dispatch_queue_cleanup_main(void)
 {
+#if !TARGET_OS_WIN32
 	// overload the "probably" variable to mean that dispatch_main() or
 	// similar non-POSIX API was called
 	// this has to run before the DISPATCH_COCOA_COMPAT below
@@ -250,11 +246,12 @@ _dispatch_queue_cleanup_main(void)
 		dispatch_async_f(dispatch_get_global_queue(0, 0), NULL, _dispatch_sigsuspend);
 		sleep(1);	// workaround 6778970
 	}
+#endif
 	
 #if DISPATCH_COCOA_COMPAT
 	_dispatch_main_q_port_clean();
 #endif
-	// TODO
+	// TODO Nothing to do here on Windows I think.
 }
 
 DISPATCH_NOINLINE
