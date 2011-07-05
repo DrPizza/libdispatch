@@ -78,5 +78,8 @@
     <ClInclude Include="src\os_shims.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\shims\asprintf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

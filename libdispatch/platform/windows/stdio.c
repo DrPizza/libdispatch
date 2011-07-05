@@ -1,12 +1,14 @@
-#include "config/config.h"
+#include "stdio.h"
 
-#include <stdio.h>
-#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <stdio.h>
 
-#ifndef HAVE_ASPRINTF
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // 'vsnprintf': This function or variable may be unsafe. Consider using vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+#endif
+
 int vasprintf(char** str, const char* fmt, va_list ap)
 {
 	va_list original_ap = ap;
@@ -47,4 +49,7 @@ int asprintf(char **str, const char *fmt, ...)
 	va_end(ap);
 	return ret;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif

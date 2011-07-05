@@ -106,6 +106,7 @@
 #include "signal.h"
 #include "unistd.h"
 #include "strings.h"
+#include "stdio.h"
 
 #include "sys/mount.h"
 #include "sys/queue.h"

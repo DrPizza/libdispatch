@@ -365,6 +365,7 @@
     <ClInclude Include="platform\platform.h" />
     <ClInclude Include="platform\unix\platform.h" />
     <ClInclude Include="platform\windows\signal.h" />
+    <ClInclude Include="platform\windows\stdio.h" />
     <ClInclude Include="platform\windows\strings.h" />
     <ClInclude Include="platform\windows\sys\event.h" />
     <ClInclude Include="platform\windows\unistd.h" />
@@ -407,6 +408,7 @@
     <ClCompile Include="platform\windows\platform.c" />
     <ClCompile Include="platform\windows\pthread.c" />
     <ClCompile Include="platform\windows\semaphore.c" />
+    <ClCompile Include="platform\windows\stdio.c" />
     <ClCompile Include="platform\windows\strings.c" />
     <ClCompile Include="platform\windows\sys\time.c" />
     <ClCompile Include="platform\windows\time.c" />

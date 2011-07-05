@@ -58,10 +58,17 @@ void
 _dispatch_logv(const char *msg, va_list ap)
 {
 #if TARGET_OS_WIN32
-	char message[256];
-	vsnprintf(message, sizeof(message) / sizeof(*message), msg, ap);
-	strncat(message, "\n", sizeof(message) / sizeof(*message));
+	size_t len = strlen(msg);
+	char* newbuf = calloc(len + 2, 1);
+	char* message = NULL;
+
+	sprintf(newbuf, "%s\n", msg);
+	vasprintf(&message, newbuf, ap);
+
 	OutputDebugStringA(message);
+
+	free(message);
+	free(newbuf);
 #elif DISPATCH_DEBUG
 	static FILE *logfile, *tmp;
 	char* newbuf = calloc(strlen(msg) + 2, 1);
