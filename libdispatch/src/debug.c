@@ -70,7 +70,8 @@ _dispatch_logv(const char *msg, va_list ap)
 	free(message);
 	free(newbuf);
 #elif DISPATCH_DEBUG
-	static FILE *logfile, *tmp;
+	static FILE *logfile;
+	FILE *tmp;
 	char* newbuf = calloc(strlen(msg) + 2, 1);
 	char path[256];
 
