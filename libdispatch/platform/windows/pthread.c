@@ -41,19 +41,22 @@ void* _pthread_get_native_handle(pthread_t pt)
 
 static void _pthread_destructors(void)
 {
-	pthread_items_t items = TlsGetValue(pthread_slot);
-	slot_destructor* local_destructors = calloc(slots_allocated, sizeof(slot_destructor));
-	long i;
+	pthread_items_t items;
+	slot_destructor* local_destructors;
+	long slot_count, i;
 	int more_calls_needed;
 
 	EnterCriticalSection(&destructor_lock);
-	memcpy(local_destructors, destructors, slots_allocated * sizeof(slot_destructor));
+	items = TlsGetValue(pthread_slot);
+	slot_count = slots_allocated;
+	local_destructors = calloc(slot_count, sizeof(slot_destructor));
+	memcpy(local_destructors, destructors, slot_count * sizeof(slot_destructor));
 	LeaveCriticalSection(&destructor_lock);
 	do
 	{
-		for(i = 0; i < slots_allocated; ++i)
+		for(i = 0; i < slot_count; ++i)
 		{
-			if(local_destructors[i] && items->items[i])
+			if(items->items[i] && local_destructors[i])
 			{
 				void* value = items->items[i];
 				items->items[i] = NULL;
@@ -61,9 +64,9 @@ static void _pthread_destructors(void)
 			}
 		}
 		more_calls_needed = 0;
-		for(i = 0; i < slots_allocated; ++i)
+		for(i = 0; i < slot_count; ++i)
 		{
-			if(items->items[i])
+			if(items->items[i] && local_destructors[i])
 			{
 				more_calls_needed = 1;
 			}
