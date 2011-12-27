@@ -21,8 +21,10 @@
 #define __DISPATCH_TESTS_SHIMS_ASPRINTF__
 
 #ifndef HAVE_ASPRINTF
-int vasprintf(char **str, const char *fmt, va_last ap);
+
+int vasprintf(char **str, const char *fmt, va_list ap);
 int asprintf(char **str, const char *fmt, ...);
+
 #endif
 
 #endif /* __DISPATCH_TESTS_SHIMS_ASPRINTF__ */
