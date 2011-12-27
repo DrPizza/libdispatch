@@ -66,7 +66,7 @@ struct timespec
 // values. Skew between different clocks is to be expected.
 //
 
-intptr_t count = 0;
+uintptr_t count = 0;
 double last_jitter = 0;
 double first = 0;
 double jittersum = 0;
