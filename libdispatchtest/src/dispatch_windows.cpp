@@ -1,7 +1,7 @@
 #include "dispatch_test.h"
 
 #include <dispatch.hpp>
-#include <iostream>
+#include <sstream>
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -12,11 +12,17 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 			case BN_CLICKED:
 				{
 					gcd::queue thread_q(gcd::queue::get_current_thread_queue());
-					::OutputDebugStringW(L"WINDOW THREAD\n");
+					std::wstringstream ss1;
+					ss1 << L"WINDOW THREAD: " << std::hex << ::GetCurrentThreadId() << std::endl;
+					::OutputDebugStringW(ss1.str().c_str());
 					gcd::queue::get_global_queue(0, 0).after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), [=] {
-						::OutputDebugStringW(L"GLOBAL THREAD\n");
+						std::wstringstream ss2;
+						ss2 << L"GLOBAL THREAD: " << std::hex << ::GetCurrentThreadId() << std::endl;
+						::OutputDebugStringW(ss2.str().c_str());
 						thread_q.async([] {
-							::OutputDebugStringW(L"BACK ON WINDOW THREAD\n");
+							std::wstringstream ss3;
+							ss3 << L"BACK ON WINDOW THREAD: " << std::hex << ::GetCurrentThreadId() << std::endl;
+							::OutputDebugStringW(ss3.str().c_str());
 						});
 					});
 				}
