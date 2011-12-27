@@ -118,11 +118,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'">
     <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
@@ -132,11 +132,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'">
     <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
@@ -146,11 +146,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
     <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
@@ -160,11 +160,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libdispatch;C:\Code\Libraries\loki\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'">
     <ClCompile>
