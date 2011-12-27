@@ -67,18 +67,12 @@
     <ClCompile Include="src\dispatch_windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\shims\asprintf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dispatch_test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\os_shims.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shims\asprintf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -210,12 +210,10 @@
     <ClCompile Include="src\dispatch_test.c" />
     <ClCompile Include="src\dispatch_timer_set_time.c" />
     <ClCompile Include="src\dispatch_windows.cpp" />
-    <ClCompile Include="src\shims\asprintf.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dispatch_test.h" />
     <ClInclude Include="src\os_shims.h" />
-    <ClInclude Include="src\shims\asprintf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
