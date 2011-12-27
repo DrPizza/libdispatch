@@ -29,7 +29,7 @@ int vasprintf(char** str, const char* fmt, va_list ap)
 		n = vsnprintf(p, size, fmt, ap);
 		va_end(ap);
 
-		if(n > -1 && n < size)
+		if(n > -1 && (size_t)n < size)
 		{
 			*str = p;
 			return n;
