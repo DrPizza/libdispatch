@@ -118,11 +118,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'">
     <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
@@ -132,11 +132,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|Win32'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'">
     <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
@@ -146,11 +146,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLDebug|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
     <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
@@ -160,11 +160,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLLRelease|x64'">
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)dispatch;$(ProjectDir)..\libdispatch;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='StaticDebug|Win32'">
     <ClCompile>
@@ -353,9 +353,9 @@
     <ClCompile Include="src\dispatch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\atomic.hpp" />
-    <ClInclude Include="src\dispatch.hpp" />
-    <ClInclude Include="src\scopeguard.hpp" />
+    <ClInclude Include="dispatch\atomic.hpp" />
+    <ClInclude Include="dispatch\dispatch.hpp" />
+    <ClInclude Include="dispatch\scopeguard.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libdispatch\libdispatch.vcxproj">

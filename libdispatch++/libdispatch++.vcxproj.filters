@@ -23,13 +23,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\dispatch.hpp">
+    <ClInclude Include="dispatch\atomic.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\scopeguard.hpp">
+    <ClInclude Include="dispatch\dispatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\atomic.hpp">
+    <ClInclude Include="dispatch\scopeguard.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

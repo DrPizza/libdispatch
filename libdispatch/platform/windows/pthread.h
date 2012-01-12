@@ -28,6 +28,11 @@ pthread_t pthread_self();
 
 void* _pthread_get_native_handle(pthread_t);
 
+// Threadpool threads are getting torn down without calling TLS destructors. This is infuriating.
+// In response, we don't rely on the automatic systems.
+void _pthread_tls_attach_thread(void);
+void _pthread_tls_detach_thread(void);
+
 #ifdef __cplusplus
 }
 #endif

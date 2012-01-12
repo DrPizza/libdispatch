@@ -38,7 +38,7 @@
 #define DISPATCH_EXPORT extern __declspec(dllexport)
 #elif defined(_LIB) // building a static lib
 #define DISPATCH_EXPORT extern
-#elif defined(USE_LIB) // linking a static lib
+#elif defined(USE_DISPATCH_STATIC_LIB) // linking a static lib
 #pragma message("Applications must link using /OPT:ICF, COMDAT folding, due to quirks of the Microsoft linker")
 #define DISPATCH_EXPORT extern
 #else

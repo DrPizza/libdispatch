@@ -3,6 +3,17 @@
 #include <SDKDDKVer.h>
 #include <Windows.h>
 
+#ifdef _MSC_VER
+
+#if defined DEBUG || defined _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#define DEBUG_CLIENTBLOCK new(_CLIENT_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_CLIENTBLOCK
+#endif
+
+#endif
+
 #include <errno.h>
 
 #pragma warning(disable : 4200) // warning C4200: nonstandard extension used : zero-sized array in struct/union
@@ -76,6 +87,38 @@ static void _pthread_destructors(void)
 	free(local_destructors);
 }
 
+void _pthread_tls_attach_thread()
+{
+	pthread_items_t items = TlsGetValue(pthread_slot);
+	if(!items)
+	{
+		HANDLE thread_handle = INVALID_HANDLE_VALUE;
+		items = calloc(1, sizeof(pthread_items) + slots_allocated * sizeof(void*));
+		items->count = slots_allocated;
+		items->current_thread = calloc(1, sizeof(pthread));
+		items->current_thread->privately_owned = TRUE;
+		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread_handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
+		items->current_thread->thread = thread_handle;
+		TlsSetValue(pthread_slot, items);
+	}
+}
+
+void _pthread_tls_detach_thread()
+{
+	pthread_items_t items = TlsGetValue(pthread_slot);
+	if(items)
+	{
+		_pthread_destructors();
+		if(items->current_thread->privately_owned)
+		{
+			CloseHandle(items->current_thread->thread);
+			free(items->current_thread);
+		}
+		free(items);
+		TlsSetValue(pthread_slot, NULL);
+	}
+}
+
 void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 {
 	UNREFERENCED_PARAMETER(dll);
@@ -88,39 +131,22 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 		destructors = NULL;
 		pthread_slot = TlsAlloc();
 		InitializeCriticalSection(&destructor_lock);
+		// fall through
 	case DLL_THREAD_ATTACH:
-		{
-			pthread_items_t items = calloc(1, sizeof(pthread_items) + slots_allocated * sizeof(void*));
-			HANDLE thread_handle = INVALID_HANDLE_VALUE;
-			items->count = slots_allocated;
-			items->current_thread = calloc(1, sizeof(pthread));
-			items->current_thread->privately_owned = TRUE;
-			DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread_handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
-			items->current_thread->thread = thread_handle;
-			TlsSetValue(pthread_slot, items);
-		}
+		_pthread_tls_attach_thread();
+		break;
+	case DLL_THREAD_DETACH:
+		_pthread_tls_detach_thread();
 		break;
 	case DLL_PROCESS_DETACH:
-	case DLL_THREAD_DETACH:
-		{
-			pthread_items_t items = TlsGetValue(pthread_slot);
-			_pthread_destructors();
-			if(items->current_thread->privately_owned)
-			{
-				CloseHandle(items->current_thread->thread);
-				free(items->current_thread);
-			}
-			free(items);
-			TlsSetValue(pthread_slot, NULL);
-			if(reason == DLL_PROCESS_DETACH)
-			{
-				free(destructors);
-				DeleteCriticalSection(&destructor_lock);
-			}
-		}
+		_pthread_tls_detach_thread();
+		free(destructors);
+		DeleteCriticalSection(&destructor_lock);
 		break;
 	}
 }
+
+#if defined(_LIB)
 
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
@@ -131,10 +157,10 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 #endif
 
 #ifdef _M_X64
-#pragma const_seg(".CRT$XLB")
+#pragma const_seg(".CRT$XLF")
 EXTERN_C const
 #else
-#pragma data_seg(".CRT$XLB")
+#pragma data_seg(".CRT$XLF")
 EXTERN_C
 #endif
 
@@ -144,6 +170,12 @@ PIMAGE_TLS_CALLBACK pthread_tls_callback = pthread_tls_init;
 #pragma const_seg()
 #else
 #pragma data_seg()
+#endif
+
+#elif defined(_WINDLL)
+
+// put dllmain here
+
 #endif
 
 int pthread_key_create(pthread_key_t* key, void (*destr_function)(void*))

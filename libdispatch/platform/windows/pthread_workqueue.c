@@ -5,7 +5,20 @@
 #include <SDKDDKVer.h>
 #include <Windows.h>
 
+#ifdef _MSC_VER
+
+#if defined DEBUG || defined _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#define DEBUG_CLIENTBLOCK new(_CLIENT_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_CLIENTBLOCK
+#endif
+
+#endif
+
 #include <errno.h>
+
+#include "pthread.h"
 
 typedef struct pthread_workqueue_attr
 {
@@ -35,17 +48,24 @@ static INIT_ONCE stacksizes_set = {0};
 
 BOOL CALLBACK get_default_stacksizes(INIT_ONCE* init_once, void* context, void** result)
 {
-	TP_POOL* pool = CreateThreadpool(NULL);
-	TP_POOL_STACK_INFORMATION psi;
+	typedef BOOL (*QueryThreadpoolStackInformationFn)(TP_POOL*, TP_POOL_STACK_INFORMATION*);
+	QueryThreadpoolStackInformationFn queryThreadpoolStackInformation = (QueryThreadpoolStackInformationFn)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "QueryThreadpoolStackInformation");
 
 	UNREFERENCED_PARAMETER(init_once);
 	UNREFERENCED_PARAMETER(context);
 	UNREFERENCED_PARAMETER(result);
 
-	QueryThreadpoolStackInformation(pool, &psi);
-	default_stack_commit = psi.StackCommit;
-	default_stack_reserve = psi.StackReserve;
-	CloseThreadpool(pool);
+	if(queryThreadpoolStackInformation) {
+		TP_POOL* pool = CreateThreadpool(NULL);
+		TP_POOL_STACK_INFORMATION psi;
+		queryThreadpoolStackInformation(pool, &psi);
+		default_stack_commit = psi.StackCommit;
+		default_stack_reserve = psi.StackReserve;
+		CloseThreadpool(pool);
+	} else {
+		default_stack_commit = 1024 * 1024;
+		default_stack_reserve = 1024 * 1024;
+	}
 	return TRUE;
 }
 
@@ -280,11 +300,15 @@ void CALLBACK _native_work_callback(TP_CALLBACK_INSTANCE* instance, void* contex
 
 	UNREFERENCED_PARAMETER(instance);
 
+	_pthread_tls_attach_thread();
+
 	SetThreadPriority(GetCurrentThread(), _qprio_to_win32_prio(workitem->q->attr->qprio));
 	workitem->function(workitem->context);
 	CloseThreadpoolWork(work);
 	free(workitem);
 	SetThreadPriority(GetCurrentThread(), original_priority);
+
+	_pthread_tls_detach_thread();
 }
 
 int _pthread_workqueue_submit_workitem(pthread_workqueue_t workq, void (*workitem_func)(void*), void* workitem_arg, pthread_workitem_handle_t* workitem_handle)
@@ -317,6 +341,8 @@ void CALLBACK _native_timer_callback(TP_CALLBACK_INSTANCE* instance, void* conte
 	UNREFERENCED_PARAMETER(instance);
 	UNREFERENCED_PARAMETER(timer);
 
+	_pthread_tls_attach_thread();
+
 	SetThreadPriority(GetCurrentThread(), _qprio_to_win32_prio(workitem->q->attr->qprio));
 	workitem->function(workitem->context);
 	if(workitem->handle)
@@ -326,6 +352,8 @@ void CALLBACK _native_timer_callback(TP_CALLBACK_INSTANCE* instance, void* conte
 		free(workitem);
 	}
 	SetThreadPriority(GetCurrentThread(), original_priority);
+
+	_pthread_tls_detach_thread();
 }
 
 FILETIME _timespec_to_filetime(struct timespec* ts)

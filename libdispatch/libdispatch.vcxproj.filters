@@ -146,9 +146,6 @@
     <ClInclude Include="platform\windows\time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="platform\unix\platform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="platform\windows\platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -311,7 +311,9 @@ namespace gcd
 
 	queue queue::get_current_queue()
 	{
-		return queue(::dispatch_get_current_queue());
+		queue q(::dispatch_get_current_queue());
+		q.retain();
+		return q;
 	}
 
 	queue queue::get_global_queue(long priority, unsigned long flags)

@@ -528,9 +528,24 @@ _dispatch_queue_set_width_init(void)
 	    _dispatch_hw_config.cc_max_physical =
 	    _dispatch_hw_config.cc_max_active = (ret < 0) ? 1 : ret;
 #elif TARGET_OS_WIN32
-	_dispatch_hw_config.cc_max_logical = (uint32_t)GetMaximumProcessorCount(ALL_PROCESSOR_GROUPS);
-	_dispatch_hw_config.cc_max_physical = (uint32_t)GetMaximumProcessorCount(ALL_PROCESSOR_GROUPS);
-	_dispatch_hw_config.cc_max_active = (uint32_t)GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+	typedef DWORD(__stdcall *GetProcessorCountFn)(WORD);
+	typedef VOID(__stdcall *GetCurrentProcessorNumberExFn)(PROCESSOR_NUMBER*);
+	GetProcessorCountFn getMaximumProcessorCount = (GetProcessorCountFn)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetMaximumProcessorCount");
+	GetProcessorCountFn getActiveProcessorCount = (GetProcessorCountFn)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetActiveProcessorCount");
+	GetCurrentProcessorNumberExFn getCurrentProcessorNumberEx = (GetCurrentProcessorNumberExFn)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetCurrentProcessorNumberEx");
+	if(getMaximumProcessorCount && getActiveProcessorCount && getCurrentProcessorNumberEx) {
+		PROCESSOR_NUMBER pn = {0};
+		getCurrentProcessorNumberEx(&pn);
+		_dispatch_hw_config.cc_max_logical = (uint32_t)getMaximumProcessorCount(pn.Group);
+		_dispatch_hw_config.cc_max_physical = (uint32_t)getMaximumProcessorCount(pn.Group);
+		_dispatch_hw_config.cc_max_active = (uint32_t)getActiveProcessorCount(pn.Group);
+	} else {
+		SYSTEM_INFO si = {0};
+		GetSystemInfo(&si);
+		_dispatch_hw_config.cc_max_logical = si.dwNumberOfProcessors;
+		_dispatch_hw_config.cc_max_physical = si.dwNumberOfProcessors;
+		_dispatch_hw_config.cc_max_active = si.dwNumberOfProcessors;
+	}
 #else
 #warning "_dispatch_queue_set_width_init: no supported way to query CPU count"
 	_dispatch_hw_config.cc_max_logical =
@@ -1062,6 +1077,8 @@ void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 	}
 }
 
+#if defined(_LIB)
+
 #ifdef _M_IX86
 #pragma comment (linker, "/INCLUDE:__tls_used")
 #pragma comment (linker, "/INCLUDE:_dispatch_tls_callback")
@@ -1071,10 +1088,10 @@ void NTAPI call_libdispatch_init(void* dll, DWORD reason, void* reserved)
 #endif
 
 #ifdef _M_X64
-#pragma const_seg(".CRT$XLE")
+#pragma const_seg(".CRT$XLG")
 EXTERN_C const
 #else
-#pragma data_seg(".CRT$XLE")
+#pragma data_seg(".CRT$XLG")
 EXTERN_C
 #endif
 
@@ -1084,6 +1101,12 @@ PIMAGE_TLS_CALLBACK dispatch_tls_callback = call_libdispatch_init;
 #pragma const_seg()
 #else
 #pragma data_seg()
+#endif
+
+#elif defined(_WINDLL)
+
+// put dllmain here
+
 #endif
 
 #endif

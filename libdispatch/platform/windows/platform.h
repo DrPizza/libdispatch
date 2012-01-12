@@ -88,6 +88,17 @@
 #include <Block.h>
 #endif /* __BLOCKS__ */
 
+#ifdef _MSC_VER
+
+#if defined DEBUG || defined _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#define DEBUG_CLIENTBLOCK new(_CLIENT_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_CLIENTBLOCK
+#endif
+
+#endif
+
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>

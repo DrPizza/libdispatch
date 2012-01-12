@@ -361,7 +361,6 @@
     <ClInclude Include="platform\windows\libkern\OSAtomic.h" />
     <ClInclude Include="platform\windows\netinet\in.h" />
     <ClInclude Include="platform\platform.h" />
-    <ClInclude Include="platform\unix\platform.h" />
     <ClInclude Include="platform\windows\signal.h" />
     <ClInclude Include="platform\windows\stdio.h" />
     <ClInclude Include="platform\windows\strings.h" />
