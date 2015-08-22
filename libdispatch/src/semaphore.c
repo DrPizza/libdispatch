@@ -169,7 +169,7 @@ _dispatch_semaphore_create_handle(HANDLE *s4)
 
 	// lazily allocate the semaphore handle
 
-	while ((tmp = CreateSemaphore(NULL, 0, LONG_MAX, NULL)) == NULL) {
+	while ((tmp = CreateSemaphoreExW(NULL, 0, LONG_MAX, NULL, 0, EVENT_ALL_ACCESS)) == NULL) {
 		dispatch_assume(tmp);
 		sleep(1);
 	}
@@ -256,7 +256,7 @@ again:
 			DWORD msec;
 			nsec = _dispatch_timeout(timeout);
 			msec = (DWORD)(nsec / (uint64_t)1000000);
-			ret = WaitForSingleObject(dsema->dsema_handle, msec);
+			ret = WaitForSingleObjectEx(dsema->dsema_handle, msec, FALSE);
 		} while (ret != WAIT_OBJECT_0 && ret != WAIT_TIMEOUT);
 		if (ret != WAIT_TIMEOUT) {
 			break;
@@ -292,7 +292,7 @@ again:
 #endif
 #if USE_WIN32_SEM
 		do {
-			ret = WaitForSingleObject(dsema->dsema_handle, INFINITE);
+			ret = WaitForSingleObjectEx(dsema->dsema_handle, INFINITE, FALSE);
 		} while (ret != WAIT_OBJECT_0);
 #endif
 		break;
@@ -581,7 +581,7 @@ again:
 			DWORD msec;
 			nsec = _dispatch_timeout(timeout);
 			msec = (DWORD)(nsec / (uint64_t)1000000);
-			ret = WaitForSingleObject(dsema->dsema_waiter_handle, msec);
+			ret = WaitForSingleObjectEx(dsema->dsema_waiter_handle, msec, FALSE);
 		} while (ret != WAIT_OBJECT_0 && ret != WAIT_TIMEOUT);
 		if (ret != WAIT_TIMEOUT) {
 			break;
@@ -617,7 +617,7 @@ again:
 #endif
 #if USE_WIN32_SEM
 		do {
-			ret = WaitForSingleObject(dsema->dsema_waiter_handle, INFINITE);
+			ret = WaitForSingleObjectEx(dsema->dsema_waiter_handle, INFINITE, FALSE);
 		} while (ret != WAIT_OBJECT_0);
 #endif
 

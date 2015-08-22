@@ -12,7 +12,7 @@
 int vasprintf(char** str, const char* fmt, va_list ap)
 {
 	va_list original_ap = ap;
-	size_t size = 32;
+	size_t size = strlen(fmt) + 1;
 	int n;
 	char* p = NULL;
 	char* np = NULL;

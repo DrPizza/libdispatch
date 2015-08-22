@@ -26,11 +26,7 @@
 #include <TargetConditionals.h>
 #endif
 
-#ifndef _MSC_VER
 #include <stdbool.h>
-#else
-#include "platform/windows/stdbool.h"
-#endif
 #include <stdarg.h>
 
 #if defined(__cplusplus)

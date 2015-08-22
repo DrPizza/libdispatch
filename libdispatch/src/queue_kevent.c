@@ -20,6 +20,7 @@
 
 #include "internal.h"
 #include "kevent_internal.h"
+#include <assert.h>
 
 #if !TARGET_OS_WIN32
 static bool _dispatch_select_workaround;
@@ -36,6 +37,115 @@ typedef int _queue_type;
 #endif
 
 static _queue_type _dispatch_kq;
+
+#ifdef WINOBJC
+typedef struct QueuedEvent
+{
+    LPOVERLAPPED result;
+    ULONG_PTR completionKey;
+    DWORD bytesTransferred;
+    struct QueuedEvent *next;
+} QueuedEvent;
+
+typedef struct CompletionQueue
+{
+    CONDITION_VARIABLE cond;
+    CRITICAL_SECTION mutex;
+    QueuedEvent *first, *last;
+} CompletionQueue;
+
+static HANDLE CreateIoCompletionPort(
+    HANDLE FileHandle,
+    HANDLE ExistingCompletionPort,
+    ULONG_PTR CompletionKey,
+    DWORD NumberOfConcurrentThreads)
+{
+    assert(FileHandle == INVALID_HANDLE_VALUE && ExistingCompletionPort == NULL);
+
+    CompletionQueue *ret = malloc(sizeof(CompletionQueue));
+    InitializeCriticalSectionEx(&ret->mutex, 0, 0);
+    InitializeConditionVariable(&ret->cond);
+    ret->first = NULL;
+    ret->last = NULL;
+
+    return (HANDLE) ret;
+}
+
+static BOOL PostQueuedCompletionStatus(
+    HANDLE CompletionPort,
+    DWORD dwNumberOfBytesTransferred,
+    ULONG_PTR dwCompletionKey,
+    LPOVERLAPPED lpOverlapped
+    )
+{
+    CompletionQueue *queue = (CompletionQueue *) CompletionPort;
+
+    QueuedEvent *event = malloc(sizeof(QueuedEvent));
+    event->result = lpOverlapped;
+    event->bytesTransferred = dwNumberOfBytesTransferred;
+    event->completionKey = dwCompletionKey;
+    event->next = NULL;
+
+    EnterCriticalSection(&queue->mutex);
+    if ( queue->last == NULL ) {
+        queue->last = event;
+    } else {
+        queue->last->next = event;
+    }
+    if ( queue->first == NULL ) {
+        queue->first = event;
+    }
+    LeaveCriticalSection(&queue->mutex);
+    WakeConditionVariable(&queue->cond);
+
+    return TRUE;
+}
+
+static BOOL GetQueuedCompletionStatus(
+    HANDLE CompletionPort,
+    LPDWORD lpNumberOfBytesTransferred,
+    PULONG_PTR lpCompletionKey,
+    LPOVERLAPPED * lpOverlapped,
+    DWORD dwMilliseconds)
+{
+    CompletionQueue *queue = (CompletionQueue *) CompletionPort;
+    bool shouldWait = true;
+
+    EnterCriticalSection(&queue->mutex);
+    for ( ;; ) {
+        if ( queue->first ) {
+            //  Remove the event from the queue
+            QueuedEvent *event = queue->first;
+            queue->first = event->next;
+
+            //  If this event is the last in the queue, there are no further queue items
+            if ( queue->last == event ) {
+                queue->last = NULL;
+            }
+            LeaveCriticalSection(&queue->mutex);
+            if ( lpNumberOfBytesTransferred ) *lpNumberOfBytesTransferred = event->bytesTransferred;
+            if ( lpCompletionKey ) *lpCompletionKey = event->completionKey;
+            if ( lpOverlapped ) *lpOverlapped = event->result;
+            free(event);
+            return TRUE;
+        }
+
+        if ( !shouldWait ) {
+            SetLastError(ERROR_TIMEOUT);
+            return FALSE;
+        }
+
+        BOOL result = SleepConditionVariableCS(&queue->cond, &queue->mutex, dwMilliseconds);
+        if ( !result ) { 
+            LeaveCriticalSection(&queue->mutex);
+            return FALSE;
+        }
+
+        //  Don't wait again - we'll return a timeout
+        shouldWait = false;
+    }
+}
+#endif
 
 static void
 _dispatch_get_kq_init(void *context DISPATCH_UNUSED)

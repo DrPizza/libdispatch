@@ -527,7 +527,7 @@ _dispatch_queue_set_width_init(void)
 	_dispatch_hw_config.cc_max_logical =
 	    _dispatch_hw_config.cc_max_physical =
 	    _dispatch_hw_config.cc_max_active = (ret < 0) ? 1 : ret;
-#elif TARGET_OS_WIN32
+#elif defined( TARGET_OS_WIN32 ) && !defined( WINOBJC )
 	typedef DWORD(__stdcall *GetProcessorCountFn)(WORD);
 	typedef VOID(__stdcall *GetCurrentProcessorNumberExFn)(PROCESSOR_NUMBER*);
 	GetProcessorCountFn getMaximumProcessorCount = (GetProcessorCountFn)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetMaximumProcessorCount");
@@ -598,7 +598,7 @@ static intptr_t _dispatch_queue_serial_numbers = 10;
 
 // Note to later developers: ensure that any initialization changes are
 // made for statically allocated queues (i.e. _dispatch_main_q).
-DISPATCH_INLINE void
+/*DISPATCH_INLINE*/ void
 _dispatch_queue_init(dispatch_queue_t dq)
 {
 	dq->do_vtable = &_dispatch_queue_vtable;
@@ -907,10 +907,10 @@ _dispatch_sync_f_slow(dispatch_queue_t dq)
 		struct dispatch_sync_slow_s {
 			DISPATCH_CONTINUATION_HEADER(dispatch_sync_slow_s);
 		} dss = {
-			/*.do_vtable = */	NULL,
-			/*.do_next   = */	0,
-			/*.dc_func   = */	_dispatch_sync_f_slow2,
-			/*.dc_ctxt   = */	_dispatch_get_thread_semaphore(),
+			.do_vtable = 	NULL,
+			.do_next   = 	0,
+			.dc_func   = 	_dispatch_sync_f_slow2,
+			.dc_ctxt   = 	_dispatch_get_thread_semaphore(),
 		};
 
 		// XXX FIXME -- concurrent queues can be come serial again
@@ -1117,7 +1117,7 @@ dispatch_get_current_thread_queue(void)
 	dispatch_queue_t q = _dispatch_thread_getspecific(dispatch_threaded_queue_key);
 	if(q == NULL) {
 		char thread_label[DISPATCH_QUEUE_MIN_LABEL_SIZE] = {0};
-		snprintf(thread_label, DISPATCH_QUEUE_MIN_LABEL_SIZE, "thread-q-%x", pthread_self());
+		snprintf(thread_label, DISPATCH_QUEUE_MIN_LABEL_SIZE, "thread-q-%p", pthread_self());
 		q = dispatch_queue_create(thread_label, 0);
 		q->do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK;
 		q->dq_running = 1;
@@ -1227,7 +1227,11 @@ static void
 _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 {
 #if HAVE_PTHREAD_WORKQUEUES
+ #ifndef WINOBJC
 	bool disable_wq = getenv("LIBDISPATCH_DISABLE_KWQ") != NULL;
+ #else
+	bool disable_wq = false;
+ #endif
 	pthread_workqueue_attr_t pwq_attr;
 	int r;
 #endif
@@ -1289,7 +1293,7 @@ _dispatch_root_queues_init(void *context DISPATCH_UNUSED)
 			(void)dispatch_assume_zero(ret);
 #endif
 #if USE_WIN32_SEM
-			_dispatch_thread_mediator[i].dsema_handle = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
+			_dispatch_thread_mediator[i].dsema_handle = CreateSemaphoreExW(NULL, 0, LONG_MAX, NULL, 0, EVENT_ALL_ACCESS);
 			dispatch_assume(_dispatch_thread_mediator[i].dsema_handle);
 #endif
 #if HAVE_PTHREAD_WORKQUEUES

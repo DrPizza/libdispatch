@@ -18,7 +18,6 @@
 
 #pragma warning(disable : 4200) // warning C4200: nonstandard extension used : zero-sized array in struct/union
 
-DWORD pthread_slot;
 long slots_allocated;
 typedef void (*slot_destructor)(void*);
 slot_destructor* destructors; // slot_destructor[slots_allocated]
@@ -33,6 +32,7 @@ struct _pthread_items
 
 typedef struct _pthread_items pthread_items;
 typedef pthread_items* pthread_items_t;
+__declspec(thread) pthread_items_t pthread_items_tlv;
 
 struct _pthread
 {
@@ -58,7 +58,7 @@ static void _pthread_destructors(void)
 	int more_calls_needed;
 
 	EnterCriticalSection(&destructor_lock);
-	items = TlsGetValue(pthread_slot);
+	items = pthread_items_tlv;
 	slot_count = slots_allocated;
 	local_destructors = calloc(slot_count, sizeof(slot_destructor));
 	memcpy(local_destructors, destructors, slot_count * sizeof(slot_destructor));
@@ -89,7 +89,7 @@ static void _pthread_destructors(void)
 
 void _pthread_tls_attach_thread()
 {
-	pthread_items_t items = TlsGetValue(pthread_slot);
+	pthread_items_t items = pthread_items_tlv;
 	if(!items)
 	{
 		HANDLE thread_handle = INVALID_HANDLE_VALUE;
@@ -99,13 +99,13 @@ void _pthread_tls_attach_thread()
 		items->current_thread->privately_owned = TRUE;
 		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread_handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		items->current_thread->thread = thread_handle;
-		TlsSetValue(pthread_slot, items);
+		pthread_items_tlv = items;
 	}
 }
 
 void _pthread_tls_detach_thread()
 {
-	pthread_items_t items = TlsGetValue(pthread_slot);
+	pthread_items_t items = pthread_items_tlv;
 	if(items)
 	{
 		_pthread_destructors();
@@ -115,7 +115,7 @@ void _pthread_tls_detach_thread()
 			free(items->current_thread);
 		}
 		free(items);
-		TlsSetValue(pthread_slot, NULL);
+		pthread_items_tlv = NULL;
 	}
 }
 
@@ -129,8 +129,7 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 	case DLL_PROCESS_ATTACH:
 		slots_allocated = 0;
 		destructors = NULL;
-		pthread_slot = TlsAlloc();
-		InitializeCriticalSection(&destructor_lock);
+		InitializeCriticalSectionEx(&destructor_lock, 0, 0);
 		// fall through
 	case DLL_THREAD_ATTACH:
 		_pthread_tls_attach_thread();
@@ -139,7 +138,11 @@ void NTAPI pthread_tls_init(void* dll, DWORD reason, void* reserved)
 		_pthread_tls_detach_thread();
 		break;
 	case DLL_PROCESS_DETACH:
+        /* For WINOBJC - Don't detach the last thread, as it is likely executing from within a block and will complain about the 
+		   queue not being empty */
+#ifndef WINOBJC
 		_pthread_tls_detach_thread();
+#endif
 		free(destructors);
 		DeleteCriticalSection(&destructor_lock);
 		break;
@@ -208,7 +211,7 @@ int pthread_key_delete(pthread_key_t key)
 
 static pthread_items_t _get_items()
 {
-	pthread_items_t items = TlsGetValue(pthread_slot);
+	pthread_items_t items = pthread_items_tlv;
 	if(items->count < slots_allocated)
 	{
 		long i = 0;
@@ -218,7 +221,7 @@ static pthread_items_t _get_items()
 			items->items[i] = NULL;
 		}
 		items->count = slots_allocated;
-		TlsSetValue(pthread_slot, items);
+		pthread_items_tlv = items;
 	}
 	return items;
 }
@@ -262,7 +265,7 @@ static DWORD WINAPI thread_proc(void* parameter)
 int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_routine)(void*), void* arg)
 {
 	fn* f;
-	HANDLE evt = CreateEvent(NULL, TRUE, FALSE, NULL);
+	HANDLE evt = CreateEventEx(NULL, NULL, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);
 
 	if(!thread || !start_routine)
 	{
@@ -284,7 +287,7 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_
 	f->pth = thread;
 	f->evt = evt;
 	CloseHandle(CreateThread(NULL, 0, thread_proc, f, 0, NULL));
-	WaitForSingleObject(evt, INFINITE);
+	WaitForSingleObjectEx(evt, INFINITE, FALSE);
 	CloseHandle(evt);
 	return 0;
 }
@@ -297,7 +300,7 @@ int pthread_detach(pthread_t thread)
 
 int pthread_join(pthread_t thread, void** thread_return)
 {
-	WaitForSingleObject(thread->thread, INFINITE);
+	WaitForSingleObjectEx(thread->thread, INFINITE, FALSE);
 	if(thread_return)
 	{
 		*thread_return = thread->result;

@@ -23,7 +23,9 @@ typedef struct _pthread_workitem _pthread_workitem;
 
 struct pthread_workitem_handle
 {
+#ifndef WINOBJC
 	TP_WORK* work;
+#endif
 };
 typedef struct pthread_workitem_handle pthread_workitem_handle_t;
 struct pthread_timeritem_handle

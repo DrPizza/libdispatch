@@ -2,7 +2,7 @@
 
 !if ( "$(CONFIGURATION)" == "StaticRelease" ) || ( "$(CONFIGURATION)" == "StaticDebug" )
 NEEDSDLL=0
-DISPATCH_OPTIONS=/DUSE_LIB=1
+DISPATCH_OPTIONS=/DUSE_DISPATCH_STATIC_LIB=1
 !elseif ( "$(CONFIGURATION)" == "DLLRelease" ) || ( "$(CONFIGURATION)" == "DLLDebug" )
 NEEDSDLL=1
 DISPATCH_OPTIONS=
@@ -57,6 +57,8 @@ dispatch_readsync.exe: $(INTDIR)dispatch_readsync.obj $(OBJS)
 dispatch_plusplus.exe: $(INTDIR)dispatch_plusplus.obj $(OBJS)
 
 dispatch_windows.exe: $(INTDIR)dispatch_windows.obj $(OBJS)
+	@if not exist $(INTDIR)$(NULL) mkdir $(INTDIR)
+	@if not exist $(OUTDIR)$(NULL) mkdir $(OUTDIR)
 	$(link) $(ldebug) $(guilflags) /PDB:$(OUTDIR)dispatch_windows.pdb /out:$(OUTDIR)dispatch_windows.exe $** $(guilibsdll) winmm.lib libdispatch.lib "libdispatch++.lib"
 
 rebuild: clean all

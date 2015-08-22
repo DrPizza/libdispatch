@@ -56,7 +56,17 @@ DISPATCH_EXPORT DISPATCH_NOTHROW
 void
 dispatch_main_queue_callback(void);
 
-#ifdef WIN32
+#if defined( WINOBJC )
+DISPATCH_EXPORT DISPATCH_NOTHROW
+struct timespec *dispatch_get_next_timer_fire(struct timespec *howsoon);
+
+typedef void (*dispatch_wake_main_thread_callback)(void *userptr);
+    
+DISPATCH_EXPORT DISPATCH_NOTHROW
+void dispatch_set_wakeup_callback(dispatch_wake_main_thread_callback callback, void *userptr);
+#endif
+
+#if defined( WIN32 ) || defined( WINOBJC )
 
 typedef unsigned int UINT;
 

@@ -1,7 +1,7 @@
 #ifndef PLATFORM__H
 #define PLATFORM__H
 
-#ifdef WIN32
+#if defined( WIN32 ) || defined( WINOBJC )
 
 #include "platform/windows/platform.h"
 

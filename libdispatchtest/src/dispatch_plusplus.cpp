@@ -20,7 +20,7 @@
 
 #include "dispatch_test.h"
 
-#include <dispatch.hpp>
+#include <dispatch/dispatch.hpp>
 #include <iostream>
 
 int main(void) {

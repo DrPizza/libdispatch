@@ -23,14 +23,20 @@ _dispatch_bug(size_t line, long val)
 {
 	static dispatch_once_t pred;
 	static void *last_seen;
+#if !defined( WINOBJC )
 	void *ra = __builtin_return_address(0);
+#else
+	void *ra = NULL;
+#endif
 
 	dispatch_once_f(&pred, NULL, _dispatch_bug_init);
 	if (last_seen != ra) {
 		last_seen = ra;
 		_dispatch_log("BUG in libdispatch: %s - %lu - 0x%lx", _dispatch_build, (unsigned long)line, val);
-#if TARGET_OS_WIN32 && defined(_DEBUG)
+#if TARGET_OS_WIN32 && defined(_DEBUG) && !defined( WINOBJC )
 		DebugBreak();
+#else
+        abort();
 #endif
 	}
 }

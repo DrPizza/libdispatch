@@ -16,7 +16,7 @@ int sem_init(sem_t* sem, int pshared, unsigned int value)
 	}
 	UNREFERENCED_PARAMETER(pshared);
 
-	*sem = CreateSemaphoreEx(NULL, value, LONG_MAX, NULL, 0, SEMAPHORE_ALL_ACCESS);
+	*sem = CreateSemaphoreExW(NULL, value, LONG_MAX, NULL, 0, SEMAPHORE_ALL_ACCESS);
 	return 0;
 }
 
@@ -43,7 +43,7 @@ int sem_wait(sem_t* sem)
 		return EINVAL;
 	}
 
-	WaitForSingleObject(*sem, INFINITE);
+	WaitForSingleObjectEx(*sem, INFINITE, FALSE);
 	return 0;
 }
 
@@ -54,7 +54,7 @@ int sem_trywait(sem_t* sem)
 		return EINVAL;
 	}
 
-	switch(WaitForSingleObject(*sem, 0))
+	switch(WaitForSingleObjectEx(*sem, 0, FALSE))
 	{
 	case WAIT_TIMEOUT:
 		return EAGAIN;
@@ -83,7 +83,7 @@ int sem_timedwait(sem_t* sem, const struct timespec* abs_timeout)
 	{
 		delta = 0;
 	}
-	switch(WaitForSingleObject(*sem, (DWORD)delta))
+	switch(WaitForSingleObjectEx(*sem, (DWORD)delta, FALSE))
 	{
 	case WAIT_TIMEOUT:
 		return ETIMEDOUT;

@@ -156,8 +156,10 @@ _dispatch_get_main_queue_port_4CF(void)
 static void
 _dispatch_window_message_init(void *ctxt DISPATCH_UNUSED)
 {
+#if !defined( WINOBJC )
 	_dispatch_thread_window_message = RegisterWindowMessageW(L"libdispatch-threadq");
 	_dispatch_main_window_message   = RegisterWindowMessageW(L"libdispatch-mainq");
+#endif
 }
 
 UINT dispatch_get_thread_window_message(void)
@@ -172,6 +174,18 @@ UINT dispatch_get_main_window_message(void)
 	return _dispatch_main_window_message;
 }
 
+#endif
+
+#ifdef WINOBJC
+static dispatch_wake_main_thread_callback _main_queue_wakeup_callback;
+static void *_main_queue_wakeup_callback_param;
+DISPATCH_INLINE
+void 
+dispatch_set_wakeup_callback(dispatch_wake_main_thread_callback callback, void *userptr)
+{
+    _main_queue_wakeup_callback = callback;
+    _main_queue_wakeup_callback_param = userptr;
+}
 #endif
 
 DISPATCH_NOINLINE
@@ -196,7 +210,9 @@ _dispatch_queue_wakeup_main(void)
 	}
 
 	_dispatch_safe_fork = false;
-#else if TARGET_OS_WIN32
+#elif defined( WINOBJC )
+    if ( _main_queue_wakeup_callback ) _main_queue_wakeup_callback(_main_queue_wakeup_callback_param);
+#elif TARGET_OS_WIN32
 	PostThreadMessage(GetThreadId(_pthread_get_native_handle(_dispatch_main_q.dq_manually_drained)), dispatch_get_main_window_message(), 0, 0);
 #endif
 }
@@ -205,7 +221,7 @@ DISPATCH_NOINLINE
 void
 _dispatch_queue_wakeup_thread(dispatch_queue_t q)
 {
-#if TARGET_OS_WIN32
+#if TARGET_OS_WIN32 && !defined( WINOBJC )
 	PostThreadMessage(GetThreadId(_pthread_get_native_handle(q->dq_manually_drained)), dispatch_get_thread_window_message(), 0, 0);
 #endif
 	// TODO decide on Mac OS X per-thread queue semantics. A mach port per thread would work nicely enough, I think.
@@ -284,3 +300,9 @@ dispatch_main_queue_callback(void)
 {
 	_dispatch_manual_queue_drain(dispatch_get_main_queue());
 }
+
+struct timespec *dispatch_get_next_timer_fire(struct timespec *howsoon)
+{
+    return _dispatch_get_next_timer_fire(howsoon);
+}
+

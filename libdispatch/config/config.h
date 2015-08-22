@@ -70,7 +70,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define if Apple leaks program is present */
-#define HAVE_LEAKS 1
+#define HAVE_LEAKS 0
 
 /* Define to 1 if you have the <libkern/OSAtomic.h> header file. */
 #define HAVE_LIBKERN_OSATOMIC_H 1
@@ -79,7 +79,7 @@
 #define HAVE_LIBKERN_OSCROSSENDIAN_H 1
 
 /* Define if mach is present */
-#define HAVE_MACH 1
+#define HAVE_MACH 0
 
 /* Define to 1 if you have the `mach_absolute_time' function. */
 #define HAVE_MACH_ABSOLUTE_TIME 1

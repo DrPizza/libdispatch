@@ -47,11 +47,13 @@ int gettimeofday(struct timeval* tp, void* tzp)
 	return 0;
 }
 
+#if !defined(HAS_TIMESPEC) && defined(_CRT_NO_TIME_T)
 struct timespec
 {
 	time_t tv_sec;
 	__int32 tv_nsec;
 };
+#endif
 
 //
 // Verify that dispatch timers do not drift, that is to say, increasingly

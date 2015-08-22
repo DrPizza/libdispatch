@@ -26,13 +26,17 @@ FORCE_INLINE void OSSpinLockLock(OSSpinLock* lock)
 {
 	while(!OSSpinLockTry(lock))
 	{
-		Yield();
+#if defined( _MSC_VER ) && !defined( WINOBJC )
+        Yield();
+#endif
 	}
 }
 
 FORCE_INLINE void OSSpinLockUnlock(OSSpinLock* lock)
 {
+#if defined( _MSC_VER ) && !defined( WINOBJC )
 	MemoryBarrier();
+#endif
 	*lock = 0;
 }
 

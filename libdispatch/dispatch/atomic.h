@@ -50,8 +50,12 @@ __DISPATCH_BEGIN_DECLS
 #pragma intrinsic(_InterlockedExchangeAdd)
 #define dispatch_atomic_add(p, v)	(_InterlockedExchangeAdd((volatile long*)(p), +(signed long)(v)), *(p))
 #define dispatch_atomic_sub(p, v)	(_InterlockedExchangeAdd((volatile long*)(p), -(signed long)(v)), *(p))
+#ifdef WINOBJC
+#define dispatch_atomic_or(p, v)	__sync_fetch_and_or((p), (v))
+#else
 #pragma intrinsic(_InterlockedOr)
 #define dispatch_atomic_or(p, v)	_InterlockedOr((volatile long*)(p), (long)(v))
+#endif
 #pragma intrinsic(_InterlockedAnd)
 #define dispatch_atomic_and(p, v)	_InterlockedAnd((volatile long*)(p), (long)(v))
 #elif defined(_M_X64)
@@ -86,8 +90,12 @@ DISPATCH_INLINE bool dispatch_atomic_cmpxchg_pointer(void* volatile* p, void* o,
 	return o == _dispatch_atomic_cmpxchg_pointer(p, o, n);
 }
 
+#ifdef WINOBJC
+#define dispatch_atomic_barrier()	__sync_synchronize()
+#else
 #pragma intrinsic(_mm_mfence)
 #define dispatch_atomic_barrier()	_mm_mfence()
+#endif
 #else
 #error "Please upgrade to GCC 4.2 or newer."
 #endif

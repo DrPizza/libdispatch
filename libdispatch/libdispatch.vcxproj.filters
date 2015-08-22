@@ -128,9 +128,6 @@
     <ClInclude Include="platform\windows\semaphore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="platform\windows\stdbool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="platform\windows\syslog.h">
       <Filter>Header Files</Filter>
     </ClInclude>

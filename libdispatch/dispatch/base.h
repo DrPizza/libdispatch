@@ -58,7 +58,7 @@ private:
 	dispatch_object_s(const dispatch_object_s &);
 	void operator=(const dispatch_object_s &);
 } *dispatch_object_t;
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined( WINOBJC )
 typedef union {
 	struct dispatch_object_s *_do;
 	struct dispatch_continuation_s *_dc;

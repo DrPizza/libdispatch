@@ -1,6 +1,10 @@
 #ifndef PLATFORM_WINDOWS_SYS_EVENT__H
 #define PLATFORM_WINDOWS_SYS_EVENT__H
 
+#ifdef WINOBJC
+ #include <mactypes.h>
+#endif
+
 struct kevent {
 	uintptr_t ident;        /* identifier for this event */
 	short     filter;       /* filter for event */

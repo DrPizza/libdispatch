@@ -1,6 +1,6 @@
 #include "dispatch_test.h"
 
-#include <dispatch.hpp>
+#include <dispatch/dispatch.hpp>
 #include <sstream>
 
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)

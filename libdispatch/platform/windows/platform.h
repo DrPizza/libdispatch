@@ -13,7 +13,9 @@
 #define NT_SLIST_ENTRY SINGLE_LIST_ENTRY
 
 #if defined(_M_IX86)
-#define __i386__
+#ifndef __i386__
+ #define __i386__
+#endif
 #elif defined(_M_X64)
 #define __x86_64__
 #define __LLP64__
@@ -83,7 +85,6 @@
 #define __private_extern__
 
 #ifdef __BLOCKS__
-#define BLOCK_EXPORT extern "C" __declspec(dllexport)
 #include <Block_private.h>
 #include <Block.h>
 #endif /* __BLOCKS__ */
@@ -103,11 +104,12 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
-#ifndef _MSC_VER
 #include <stdbool.h>
+#if !defined(_MSC_VER)
+#include <inttypes.h>
+#elif defined( WINOBJC )
 #include <inttypes.h>
 #else
-#include "platform/windows/stdbool.h"
 #include "platform/windows/inttypes.h"
 #endif
 #include <stdarg.h>

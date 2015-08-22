@@ -32,7 +32,7 @@
 #define ROUND_UP_TO_CACHELINE_SIZE(x)	(((x) + (DISPATCH_CACHELINE_SIZE - 1)) & ~(DISPATCH_CACHELINE_SIZE - 1))
 #define ROUND_UP_TO_VECTOR_SIZE(x)	(((x) + 15) & ~15)
 
-#if __GNUC__
+#if defined( __GNUC__ )
 #if defined(__i386__) || defined(__x86_64__)
 #define _dispatch_hardware_pause() asm("pause")
 #define _dispatch_debugger() asm("int3")
@@ -42,7 +42,11 @@
 #endif
 // really just a low level abort()
 #define _dispatch_hardware_crash() __builtin_trap()
-#elif _MSC_VER
+#elif defined( WINOBJC )
+#define _dispatch_hardware_pause() 
+#define _dispatch_debugger() abort()
+#define _dispatch_hardware_crash() abort()
+#elif defined(_MSC_VER)
 #define _dispatch_hardware_pause() YieldProcessor()
 #define _dispatch_debugger() DebugBreak()
 #define _dispatch_hardware_crash() (DebugBreak(), FatalExit(-1))

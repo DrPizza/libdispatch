@@ -3,7 +3,9 @@
 
 #ifndef __cplusplus
 
-#define bool    char
+#ifndef bool
+ #define bool    char
+#endif
 #define true    1
 #define false   0
 
